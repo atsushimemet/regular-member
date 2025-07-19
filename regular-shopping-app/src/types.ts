@@ -25,3 +25,35 @@ export interface ShoppingList {
   items: RegularItem[];
   lastUpdated: Date;
 }
+
+// 認証関連の型定義
+export interface Couple {
+  coupleId: string;
+  coupleName: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  token: string;
+  couple: Couple;
+}
+
+export interface AuthContextType {
+  couple: Couple | null;
+  token: string | null;
+  login: (coupleId: string, password: string) => Promise<void>;
+  register: (coupleId: string, coupleName: string, password: string) => Promise<void>;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+// API レスポンス型
+export interface ApiResponse<T> {
+  message?: string;
+  data?: T;
+  error?: string;
+}
+
+export interface ItemsResponse {
+  items: RegularItem[];
+}

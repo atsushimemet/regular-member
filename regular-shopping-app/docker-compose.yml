@@ -1,14 +1,63 @@
+version: '3.8'
+
 services:
-  # 本番環境用
+  # PostgreSQL データベース
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: regular_shopping
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # バックエンド API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: regular_shopping
+      DB_USER: postgres
+      DB_PASSWORD: password
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server:/app/server
+    profiles:
+      - api
+
+  # フロントエンド（本番環境）
   regular-shopping-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:80"
     environment:
-      - NODE_ENV=production
-    restart: unless-stopped
+      REACT_APP_API_URL: http://localhost:3001/api
+    depends_on:
+      - api
+    profiles:
+      - frontend
 
-  # 開発環境用
+  # 開発環境用フロントエンド
   regular-shopping-app-dev:
     build:
       context: .
@@ -19,9 +68,9 @@ services:
       - .:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-    stdin_open: true
-    tty: true
+      REACT_APP_API_URL: http://localhost:3001/api
     profiles:
       - dev
+
+volumes:
+  postgres_data:
