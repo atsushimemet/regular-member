@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CATEGORIES, RegularItem } from '../types';
 
 interface Props {
   items: RegularItem[];
   onDeleteItem: (id: string) => void;
+  inventoryState: {[itemId: string]: 'unknown' | 'available' | 'unavailable'};
+  setInventoryState: React.Dispatch<React.SetStateAction<{[itemId: string]: 'unknown' | 'available' | 'unavailable'}>>;
+  checkedItems: Set<string>;
+  setCheckedItems: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 // 在庫状態の型定義
@@ -65,14 +69,17 @@ const getDisplayName = (name: string): string => {
   return name.trim().replace(/,\s*(new|tired|emer|low)$/, '');
 };
 
-const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
-  // 在庫状態を管理するstate
-  const [inventoryState, setInventoryState] = useState<InventoryState>({});
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
-
+const RegularItemsList: React.FC<Props> = ({ 
+  items, 
+  onDeleteItem, 
+  inventoryState, 
+  setInventoryState, 
+  checkedItems, 
+  setCheckedItems 
+}) => {
   // 在庫状態を更新する関数
   const updateInventoryStatus = (itemId: string, status: InventoryStatus) => {
-    setInventoryState((prev: InventoryState) => ({
+    setInventoryState((prev) => ({
       ...prev,
       [itemId]: status
     }));
@@ -80,7 +87,7 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
 
   // チェックボックスの状態を更新する関数
   const toggleCheckedItem = (itemId: string) => {
-    setCheckedItems((prev: Set<string>) => {
+    setCheckedItems((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(itemId)) {
         newSet.delete(itemId);

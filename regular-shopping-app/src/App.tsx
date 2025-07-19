@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import AddItemForm from './components/AddItemForm';
+import AuthForm from './components/AuthForm';
 import LineShareText from './components/LineShareText';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
-import AuthForm from './components/AuthForm';
-import { RegularItem } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { RegularItem } from './types';
 import { apiClient } from './utils/api';
 
 function AppContent() {
   const [items, setItems] = useState<RegularItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [inventoryState, setInventoryState] = useState<{[itemId: string]: 'unknown' | 'available' | 'unavailable'}>({});
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   
   const { couple, isLoading: authLoading } = useAuth();
 
@@ -69,6 +71,12 @@ function AppContent() {
       setError(error instanceof Error ? error.message : 'アイテムの削除に失敗しました');
       console.error('Failed to delete item:', error);
     }
+  };
+
+  // 買い物終了時に状態をリセットする関数
+  const resetShoppingState = () => {
+    setInventoryState({});
+    setCheckedItems(new Set());
   };
 
   // 認証ロード中
@@ -159,9 +167,46 @@ function AppContent() {
         ) : (
           <RegularItemsList 
             items={items} 
-            onDeleteItem={handleDeleteItem} 
+            onDeleteItem={handleDeleteItem}
+            inventoryState={inventoryState}
+            setInventoryState={setInventoryState}
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
           />
         )}
+
+        {/* 買い物終了ボタン */}
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '30px',
+          marginBottom: '20px'
+        }}>
+          <button
+            onClick={resetShoppingState}
+            style={{
+              padding: '12px 24px',
+              fontSize: '16px',
+              backgroundColor: '#2196f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: '500',
+              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#1976d2';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#2196f3';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            🛒 買い物終了
+          </button>
+        </div>
 
         <LineShareText items={items} />
       </div>
