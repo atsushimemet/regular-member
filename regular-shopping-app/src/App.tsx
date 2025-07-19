@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import './App.css';
 import AddItemForm from './components/AddItemForm';
+import LineShareText from './components/LineShareText';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
 import { RegularItem } from './types';
-import { saveShoppingList, loadShoppingList, getListIdFromUrl } from './utils/storage';
-import './App.css';
+import { getListIdFromUrl, loadShoppingList, saveShoppingList } from './utils/storage';
 
 function App() {
   const [items, setItems] = useState<RegularItem[]>([]);
@@ -77,6 +78,8 @@ function App() {
           items={items} 
           onDeleteItem={handleDeleteItem} 
         />
+
+        <LineShareText items={items} />
       </div>
     </div>
   );
