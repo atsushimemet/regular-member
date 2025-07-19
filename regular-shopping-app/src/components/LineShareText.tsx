@@ -16,11 +16,13 @@ const LineShareText: React.FC<Props> = ({ items }) => {
 
   // カンマ区切りの商品を解析する関数
   const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-    // ,newで終わる場合は最後の要素を除外して判定
+    // ,newまたは,tiredで終わる場合は最後の要素を除外して判定
     const isNewItem = name.trim().endsWith(',new');
-    const nameWithoutNew = isNewItem ? name.trim().replace(/,\s*new$/, '') : name;
+    const isTiredItem = name.trim().endsWith(',tired');
+    const nameWithoutSuffix = isNewItem || isTiredItem ? 
+      name.trim().replace(/,\s*(new|tired)$/, '') : name;
     
-    const items = nameWithoutNew.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
     
     // 2商品以上の場合に条件を適用
     if (items.length >= 2) {
@@ -41,9 +43,14 @@ const LineShareText: React.FC<Props> = ({ items }) => {
     return name.trim().endsWith(',new');
   };
 
-  // 表示用の商品名を取得する関数（,newを除去）
+  // 元気ない時に買う商品かどうかを判定する関数
+  const isTiredItem = (name: string): boolean => {
+    return name.trim().endsWith(',tired');
+  };
+
+  // 表示用の商品名を取得する関数（,newと,tiredを除去）
   const getDisplayName = (name: string): string => {
-    return name.trim().replace(/,\s*new$/, '');
+    return name.trim().replace(/,\s*(new|tired)$/, '');
   };
 
   // LINEで共有するテキストを生成
@@ -66,11 +73,15 @@ const LineShareText: React.FC<Props> = ({ items }) => {
       items.forEach(item => {
         const parsed = parseCommaSeparatedItems(item.name);
         const isNewItemFlag = isNewItem(item.name);
+        const isTiredItemFlag = isTiredItem(item.name);
         const displayName = getDisplayName(item.name);
         
         text += `・${displayName}`;
         if (isNewItemFlag) {
           text += ` 🤔本当に必要？`;
+        }
+        if (isTiredItemFlag) {
+          text += ` 😴元気ない時に買う`;
         }
         if (parsed.hasCondition) {
           text += ` 💡条件: 安い方を買う`;

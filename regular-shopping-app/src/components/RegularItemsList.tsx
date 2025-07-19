@@ -8,11 +8,13 @@ interface Props {
 
 // カンマ区切りの商品を解析する関数
 const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-  // ,newで終わる場合は最後の要素を除外して判定
+  // ,newまたは,tiredで終わる場合は最後の要素を除外して判定
   const isNewItem = name.trim().endsWith(',new');
-  const nameWithoutNew = isNewItem ? name.trim().replace(/,\s*new$/, '') : name;
+  const isTiredItem = name.trim().endsWith(',tired');
+  const nameWithoutSuffix = isNewItem || isTiredItem ? 
+    name.trim().replace(/,\s*(new|tired)$/, '') : name;
   
-  const items = nameWithoutNew.split(',').map(item => item.trim()).filter(item => item.length > 0);
+  const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
   
   // 2商品以上の場合に条件を適用
   if (items.length >= 2) {
@@ -33,9 +35,14 @@ const isNewItem = (name: string): boolean => {
   return name.trim().endsWith(',new');
 };
 
-// 表示用の商品名を取得する関数（,newを除去）
+// 元気ない時に買う商品かどうかを判定する関数
+const isTiredItem = (name: string): boolean => {
+  return name.trim().endsWith(',tired');
+};
+
+// 表示用の商品名を取得する関数（,newと,tiredを除去）
 const getDisplayName = (name: string): string => {
-  return name.trim().replace(/,\s*new$/, '');
+  return name.trim().replace(/,\s*(new|tired)$/, '');
 };
 
 const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
@@ -72,14 +79,19 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
               const parsed = parseCommaSeparatedItems(item.name);
               const isConditionalItem = parsed.hasCondition;
               const isNewItemFlag = isNewItem(item.name);
+              const isTiredItemFlag = isTiredItem(item.name);
               const displayName = getDisplayName(item.name);
               
-              // 背景色の決定（優先順位: 新規かつ条件付き > 新規 > 条件付き > 通常）
+              // 背景色の決定（優先順位: 新規かつ条件付き > 元気ないかつ条件付き > 新規 > 元気ない > 条件付き > 通常）
               let backgroundColor = '#fff';
               if (isNewItemFlag && isConditionalItem) {
                 backgroundColor = '#e8f5e8'; // 薄い緑色（新規かつ条件付き）
+              } else if (isTiredItemFlag && isConditionalItem) {
+                backgroundColor = '#fff3e0'; // 薄いオレンジ色（元気ないかつ条件付き）
               } else if (isNewItemFlag) {
                 backgroundColor = '#e3f2fd'; // 薄い青色（新規のみ）
+              } else if (isTiredItemFlag) {
+                backgroundColor = '#fce4ec'; // 薄いピンク色（元気ないのみ）
               } else if (isConditionalItem) {
                 backgroundColor = '#ffe6f2'; // 薄ピンク色（条件付きのみ）
               }
@@ -108,6 +120,16 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                         fontStyle: 'italic'
                       }}>
                         🤔 本当に必要？
+                      </div>
+                    )}
+                    {isTiredItemFlag && (
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#e65100', 
+                        marginTop: '4px',
+                        fontStyle: 'italic'
+                      }}>
+                        😴 元気ない時に買う
                       </div>
                     )}
                     {isConditionalItem && (
