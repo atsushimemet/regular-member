@@ -54,6 +54,18 @@
 - 同じSQLクエリ、同じスキーマ構造を使用可能
 - データベースマイグレーションが不要
 
+### Docker環境でのデプロイの利点
+- **開発環境との一貫性**: 開発時と同じDocker環境でデプロイ
+- **依存関係の管理**: 環境の違いによる問題を回避
+- **再現性**: 同じ環境で確実にビルド・デプロイ
+- **スケーラビリティ**: コンテナ化により水平スケーリングが容易
+
+### デプロイ方式の選択
+| 方式 | 利点 | 注意点 | 推奨度 |
+|------|------|--------|--------|
+| **Docker環境** | 開発環境との一貫性、依存関係管理 | ビルド時間が長い | ✅ **推奨** |
+| 従来のNode.js | ビルド時間が短い | 環境の違いによる問題 | 代替案 |
+
 ## 1. Supabase（データベース）のセットアップ
 
 ### 1.1 Supabaseプロジェクトの作成
@@ -64,12 +76,47 @@
 
 ### 1.2 データベース接続情報の取得
 1. プロジェクトダッシュボードで「Settings」→「Database」を開く
-2. 以下の情報をメモ：
+2. **「Direct connection」セクション**を探す（推奨）
+3. 以下の情報をメモ：
    - **Host**: `db.xxxxxxxxxxxxx.supabase.co`
    - **Database name**: `postgres`
    - **Port**: `5432`
    - **User**: `postgres`
    - **Password**: プロジェクト作成時に設定したパスワード
+
+**重要**: **Direct connection**を選択してください。Transaction poolerやSession poolerは今回の用途には不要です。
+
+**Connection stringの形式**:
+```
+postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxxxxx.supabase.co:5432/postgres
+```
+
+**注意**: 最新のSupabase UIでは、接続情報の表示方法が変更されている場合があります。以下の代替方法も試してください：
+
+**代替方法1: Connection stringから取得**
+1. 「Settings」→「Database」で「Direct connection」の「Connection string」を探す
+2. `postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxxxxx.supabase.co:5432/postgres` の形式で表示される
+3. この文字列から各要素を抽出：
+   - Host: `db.xxxxxxxxxxxxx.supabase.co`
+   - Port: `5432`
+   - Database: `postgres`
+   - User: `postgres`
+   - Password: `[YOUR-PASSWORD]`の部分
+
+**代替方法2: 個別の接続情報から取得**
+1. 「Settings」→「Database」で「Direct connection」セクションを開く
+2. 以下の項目を個別に確認：
+   - **Host**: データベースのホスト名
+   - **Database name**: 通常は `postgres`
+   - **Port**: 通常は `5432`
+   - **User**: 通常は `postgres`
+   - **Password**: プロジェクト作成時に設定したパスワード
+
+**代替方法3: API Keysから取得（参考）**
+1. 「Settings」→「API」を開く
+2. 「Project API keys」セクションで「anon public」キーを確認
+3. または「service_role secret」キーを確認（注意: このキーは機密情報）
+4. ただし、データベース接続には上記のDirect connection情報を使用してください
 
 ### 1.3 データベーススキーマの設定
 1. Supabaseダッシュボードで「SQL Editor」を開く
@@ -109,7 +156,15 @@ CREATE INDEX idx_couples_couple_id ON couples(couple_id);
 2. 「New」→「Web Service」を選択
 3. GitHubリポジトリを接続
 
-### 2.2 環境変数の設定
+### 2.2 Docker環境でのデプロイ設定
+Renderダッシュボードで以下のDocker設定を行います：
+
+#### Docker設定
+- **Docker Build Context Directory**: `regular-shopping-app`
+- **Dockerfile Path**: `regular-shopping-app/Dockerfile.api`
+- **Docker Command**: `npm run server`
+
+#### 環境変数の設定
 Renderダッシュボードで以下の環境変数を設定：
 
 ```
@@ -124,7 +179,9 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 FRONTEND_URL=https://your-frontend-app.onrender.com
 ```
 
-### 2.3 ビルド設定
+### 2.3 従来のNode.js環境でのデプロイ設定（代替）
+もしDocker環境を使用しない場合は、以下の設定を使用：
+
 - **Build Command**: `npm install`
 - **Start Command**: `npm run server`
 - **Root Directory**: `regular-shopping-app`
@@ -136,14 +193,24 @@ FRONTEND_URL=https://your-frontend-app.onrender.com
 
 ## 3. Render（フロントエンド）のデプロイ
 
-### 3.1 環境変数の設定
+### 3.1 Docker環境でのデプロイ設定
+Renderダッシュボードで以下のDocker設定を行います：
+
+#### Docker設定
+- **Docker Build Context Directory**: `regular-shopping-app`
+- **Dockerfile Path**: `regular-shopping-app/Dockerfile`
+- **Docker Command**: （空欄のまま、DockerfileのCMDを使用）
+
+#### 環境変数の設定
 フロントエンド用の環境変数を設定：
 
 ```
 REACT_APP_API_URL=https://your-api-app.onrender.com/api
 ```
 
-### 3.2 ビルド設定
+### 3.2 従来のStatic Site環境でのデプロイ設定（代替）
+もしDocker環境を使用しない場合は、以下の設定を使用：
+
 - **Build Command**: `npm install && npm run build`
 - **Publish Directory**: `build`
 - **Root Directory**: `regular-shopping-app`
@@ -225,6 +292,13 @@ curl -X POST https://your-api-app.onrender.com/api/auth/register \
 # 環境変数が正しく設定されているか確認
 ```
 
+**Dockerビルドエラー**
+```bash
+# Dockerfileの構文エラーを確認
+# 依存関係のインストールエラーを確認
+# ビルドコンテキストのパスを確認
+```
+
 **データベース接続エラー**
 ```bash
 # Supabaseの接続情報を確認
@@ -237,6 +311,14 @@ curl -X POST https://your-api-app.onrender.com/api/auth/register \
 # REACT_APP_API_URLが正しく設定されているか確認
 # CORS設定を確認
 # APIが正常に動作しているか確認
+```
+
+**Docker環境での特有の問題**
+```bash
+# Docker Build Context Directoryが正しく設定されているか確認
+# Dockerfile Pathが正しく設定されているか確認
+# Docker Commandが正しく設定されているか確認
+# コンテナ内のポート設定を確認
 ```
 
 ### 8.2 ロールバック手順
@@ -280,4 +362,4 @@ curl -X POST https://your-api-app.onrender.com/api/auth/register \
 - [ ] レギュラーメンバーの追加・削除が動作
 - [ ] ログが正常に出力されている
 - [ ] セキュリティ設定が適切
-- [ ] パフォーマンスが良好 
+- [ ] パフォーマンスが良好
