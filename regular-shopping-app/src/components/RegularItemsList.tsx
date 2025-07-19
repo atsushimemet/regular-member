@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CATEGORIES, RegularItem } from '../types';
 
 interface Props {
   items: RegularItem[];
   onDeleteItem: (id: string) => void;
+}
+
+// 在庫状態の型定義
+type InventoryStatus = 'unknown' | 'available' | 'unavailable';
+
+// 在庫状態を管理するインターフェース
+interface InventoryState {
+  [itemId: string]: InventoryStatus;
 }
 
 // カンマ区切りの商品を解析する関数
@@ -58,6 +66,31 @@ const getDisplayName = (name: string): string => {
 };
 
 const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
+  // 在庫状態を管理するstate
+  const [inventoryState, setInventoryState] = useState<InventoryState>({});
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  // 在庫状態を更新する関数
+  const updateInventoryStatus = (itemId: string, status: InventoryStatus) => {
+    setInventoryState((prev: InventoryState) => ({
+      ...prev,
+      [itemId]: status
+    }));
+  };
+
+  // チェックボックスの状態を更新する関数
+  const toggleCheckedItem = (itemId: string) => {
+    setCheckedItems((prev: Set<string>) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
   // カテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
   const itemsByCategory = CATEGORIES.map(category => ({
     category,
@@ -118,22 +151,45 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                 backgroundColor = '#ffe6f2'; // 薄ピンク色（条件付きのみ）
               }
               
+              const currentStatus = inventoryState[item.id] || 'unknown';
+              const isChecked = checkedItems.has(item.id);
+              const isGrayedOut = currentStatus === 'available' || isChecked;
+              const hasBlackBorder = currentStatus === 'unavailable';
+
               return (
                 <div
                   key={item.id}
                   style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     padding: '12px',
-                    backgroundColor,
-                    border: '1px solid #ddd',
+                    backgroundColor: isGrayedOut ? '#f5f5f5' : backgroundColor,
+                    border: hasBlackBorder ? '2px solid #000' : '1px solid #ddd',
                     borderRadius: '4px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    opacity: isGrayedOut ? 0.6 : 1
                   }}
                 >
+                  {/* チェックボックス */}
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleCheckedItem(item.id)}
+                    style={{
+                      marginRight: '12px',
+                      marginTop: '2px',
+                      transform: 'scale(1.2)'
+                    }}
+                  />
+                  
+                  {/* 商品情報 */}
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '16px' }}>{displayName}</span>
+                    <span style={{ 
+                      fontSize: '16px',
+                      textDecoration: isGrayedOut ? 'line-through' : 'none'
+                    }}>
+                      {displayName}
+                    </span>
                     {isNewItemFlag && (
                       <div style={{ 
                         fontSize: '12px', 
@@ -164,16 +220,16 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                         🚨 非常食
                       </div>
                     )}
-                                         {isLowItemFlag && (
-                       <div style={{ 
-                         fontSize: '12px', 
-                         color: '#00796b', 
-                         marginTop: '4px',
-                         fontStyle: 'italic'
-                       }}>
-                         💰 安い場合に買う
-                       </div>
-                     )}
+                    {isLowItemFlag && (
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#00796b', 
+                        marginTop: '4px',
+                        fontStyle: 'italic'
+                      }}>
+                        💰 安い場合に買う
+                      </div>
+                    )}
                     {isConditionalItem && (
                       <div style={{ 
                         fontSize: '12px', 
@@ -185,21 +241,59 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => onDeleteItem(item.id)}
-                    style={{
-                      padding: '4px 8px',
-                      fontSize: '12px',
-                      backgroundColor: '#ff6b6b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '3px',
-                      cursor: 'pointer',
-                      marginLeft: '10px'
-                    }}
-                  >
-                    削除
-                  </button>
+
+                  {/* 在庫確認ボタンと削除ボタン */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '10px' }}>
+                    {/* 1行目: 在庫確認ボタン */}
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={() => updateInventoryStatus(item.id, 'available')}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: currentStatus === 'available' ? '#4caf50' : '#e0e0e0',
+                          color: currentStatus === 'available' ? 'white' : '#333',
+                          border: '1px solid #ccc',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          minWidth: '40px'
+                        }}
+                      >
+                        ある
+                      </button>
+                      <button
+                        onClick={() => updateInventoryStatus(item.id, 'unavailable')}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: currentStatus === 'unavailable' ? '#f44336' : '#e0e0e0',
+                          color: currentStatus === 'unavailable' ? 'white' : '#333',
+                          border: '1px solid #ccc',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          minWidth: '40px'
+                        }}
+                      >
+                        ない
+                      </button>
+                    </div>
+                    
+                    {/* 2行目: 削除ボタン */}
+                    <button
+                      onClick={() => onDeleteItem(item.id)}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        backgroundColor: '#ff6b6b',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '3px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
                 </div>
               );
             })}
