@@ -16,12 +16,13 @@ const LineShareText: React.FC<Props> = ({ items }) => {
 
   // カンマ区切りの商品を解析する関数
   const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-    // ,new、,tired、,emerで終わる場合は最後の要素を除外して判定
+    // ,new、,tired、,emer、,lowで終わる場合は最後の要素を除外して判定
     const isNewItem = name.trim().endsWith(',new');
     const isTiredItem = name.trim().endsWith(',tired');
     const isEmerItem = name.trim().endsWith(',emer');
-    const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem ? 
-      name.trim().replace(/,\s*(new|tired|emer)$/, '') : name;
+    const isLowItem = name.trim().endsWith(',low');
+    const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem || isLowItem ? 
+      name.trim().replace(/,\s*(new|tired|emer|low)$/, '') : name;
     
     const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
     
@@ -54,9 +55,14 @@ const LineShareText: React.FC<Props> = ({ items }) => {
     return name.trim().endsWith(',emer');
   };
 
-  // 表示用の商品名を取得する関数（,new、,tired、,emerを除去）
+  // セール時購入商品かどうかを判定する関数
+  const isLowItem = (name: string): boolean => {
+    return name.trim().endsWith(',low');
+  };
+
+  // 表示用の商品名を取得する関数（,new、,tired、,emer、,lowを除去）
   const getDisplayName = (name: string): string => {
-    return name.trim().replace(/,\s*(new|tired|emer)$/, '');
+    return name.trim().replace(/,\s*(new|tired|emer|low)$/, '');
   };
 
   // LINEで共有するテキストを生成
@@ -81,6 +87,7 @@ const LineShareText: React.FC<Props> = ({ items }) => {
         const isNewItemFlag = isNewItem(item.name);
         const isTiredItemFlag = isTiredItem(item.name);
         const isEmerItemFlag = isEmerItem(item.name);
+        const isLowItemFlag = isLowItem(item.name);
         const displayName = getDisplayName(item.name);
         
         text += `・${displayName}`;
@@ -92,6 +99,9 @@ const LineShareText: React.FC<Props> = ({ items }) => {
         }
         if (isEmerItemFlag) {
           text += ` 🚨非常食`;
+        }
+        if (isLowItemFlag) {
+          text += ` 💰安い場合に買う`;
         }
         if (parsed.hasCondition) {
           text += ` 💡条件: 安い方を買う`;

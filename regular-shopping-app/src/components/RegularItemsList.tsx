@@ -8,12 +8,13 @@ interface Props {
 
 // カンマ区切りの商品を解析する関数
 const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-  // ,new、,tired、,emerで終わる場合は最後の要素を除外して判定
+  // ,new、,tired、,emer、,lowで終わる場合は最後の要素を除外して判定
   const isNewItem = name.trim().endsWith(',new');
   const isTiredItem = name.trim().endsWith(',tired');
   const isEmerItem = name.trim().endsWith(',emer');
-  const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem ? 
-    name.trim().replace(/,\s*(new|tired|emer)$/, '') : name;
+  const isLowItem = name.trim().endsWith(',low');
+  const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem || isLowItem ? 
+    name.trim().replace(/,\s*(new|tired|emer|low)$/, '') : name;
   
   const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
   
@@ -46,9 +47,14 @@ const isEmerItem = (name: string): boolean => {
   return name.trim().endsWith(',emer');
 };
 
-// 表示用の商品名を取得する関数（,new、,tired、,emerを除去）
+// セール時購入商品かどうかを判定する関数
+const isLowItem = (name: string): boolean => {
+  return name.trim().endsWith(',low');
+};
+
+// 表示用の商品名を取得する関数（,new、,tired、,emer、,lowを除去）
 const getDisplayName = (name: string): string => {
-  return name.trim().replace(/,\s*(new|tired|emer)$/, '');
+  return name.trim().replace(/,\s*(new|tired|emer|low)$/, '');
 };
 
 const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
@@ -87,9 +93,10 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
               const isNewItemFlag = isNewItem(item.name);
               const isTiredItemFlag = isTiredItem(item.name);
               const isEmerItemFlag = isEmerItem(item.name);
+              const isLowItemFlag = isLowItem(item.name);
               const displayName = getDisplayName(item.name);
               
-              // 背景色の決定（優先順位: 新規かつ条件付き > 元気ないかつ条件付き > 非常食かつ条件付き > 新規 > 元気ない > 非常食 > 条件付き > 通常）
+              // 背景色の決定（優先順位: 新規かつ条件付き > 元気ないかつ条件付き > 非常食かつ条件付き > セール時かつ条件付き > 新規 > 元気ない > 非常食 > セール時 > 条件付き > 通常）
               let backgroundColor = '#fff';
               if (isNewItemFlag && isConditionalItem) {
                 backgroundColor = '#e8f5e8'; // 薄い緑色（新規かつ条件付き）
@@ -97,12 +104,16 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                 backgroundColor = '#fff3e0'; // 薄いオレンジ色（元気ないかつ条件付き）
               } else if (isEmerItemFlag && isConditionalItem) {
                 backgroundColor = '#f3e5f5'; // 薄い紫色（非常食かつ条件付き）
+              } else if (isLowItemFlag && isConditionalItem) {
+                backgroundColor = '#e0f2f1'; // 薄いティール色（セール時かつ条件付き）
               } else if (isNewItemFlag) {
                 backgroundColor = '#e3f2fd'; // 薄い青色（新規のみ）
               } else if (isTiredItemFlag) {
                 backgroundColor = '#fce4ec'; // 薄いピンク色（元気ないのみ）
               } else if (isEmerItemFlag) {
                 backgroundColor = '#e8eaf6'; // 薄いインディゴ色（非常食のみ）
+              } else if (isLowItemFlag) {
+                backgroundColor = '#e0f2f1'; // 薄いティール色（セール時のみ）
               } else if (isConditionalItem) {
                 backgroundColor = '#ffe6f2'; // 薄ピンク色（条件付きのみ）
               }
@@ -153,6 +164,16 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                         🚨 非常食
                       </div>
                     )}
+                                         {isLowItemFlag && (
+                       <div style={{ 
+                         fontSize: '12px', 
+                         color: '#00796b', 
+                         marginTop: '4px',
+                         fontStyle: 'italic'
+                       }}>
+                         💰 安い場合に買う
+                       </div>
+                     )}
                     {isConditionalItem && (
                       <div style={{ 
                         fontSize: '12px', 

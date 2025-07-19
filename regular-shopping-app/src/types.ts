@@ -10,7 +10,7 @@ export const CATEGORIES = [
   { id: 'bread', name: 'パン', order: 8 },
   { id: 'beverages', name: '飲み物', order: 9 },
   { id: 'frozen', name: '冷凍食品', order: 10 },
-  { id: 'snacks', name: 'お菓子', order: 11 },
+  { id: 'snacks', name: 'お菓子など', order: 11 },
   { id: 'other', name: 'その他', order: 12 }
 ] as const;
 
