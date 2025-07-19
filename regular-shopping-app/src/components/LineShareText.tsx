@@ -14,6 +14,24 @@ const LineShareText: React.FC<Props> = ({ items }) => {
     items: items.filter(item => item.categoryId === category.id)
   })).filter(group => group.items.length > 0);
 
+  // カンマ区切りの商品を解析する関数
+  const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
+    const items = name.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    
+    // 2商品の場合のみ条件を適用
+    if (items.length === 2) {
+      return {
+        items,
+        hasCondition: true
+      };
+    }
+    
+    return {
+      items: [name],
+      hasCondition: false
+    };
+  };
+
   // LINEで共有するテキストを生成
   const generateShareText = () => {
     if (items.length === 0) {
@@ -32,7 +50,12 @@ const LineShareText: React.FC<Props> = ({ items }) => {
     itemsByCategory.forEach(({ category, items }) => {
       text += `【${category.name}】\n`;
       items.forEach(item => {
-        text += `・${item.name}\n`;
+        const parsed = parseCommaSeparatedItems(item.name);
+        text += `・${item.name}`;
+        if (parsed.hasCondition) {
+          text += ` 💡条件: 安い方を買う`;
+        }
+        text += '\n';
       });
       text += '\n';
     });

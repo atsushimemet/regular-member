@@ -6,6 +6,24 @@ interface Props {
   onDeleteItem: (id: string) => void;
 }
 
+// カンマ区切りの商品を解析する関数
+const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
+  const items = name.split(',').map(item => item.trim()).filter(item => item.length > 0);
+  
+  // 2商品の場合のみ条件を適用
+  if (items.length === 2) {
+    return {
+      items,
+      hasCondition: true
+    };
+  }
+  
+  return {
+    items: [name],
+    hasCondition: false
+  };
+};
+
 const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
   // カテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
   const itemsByCategory = CATEGORIES.map(category => ({
@@ -36,37 +54,56 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
             {category.name}
           </h4>
           <div style={{ display: 'grid', gap: '8px' }}>
-            {items.map(item => (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                }}
-              >
-                <span style={{ fontSize: '16px' }}>{item.name}</span>
-                <button
-                  onClick={() => onDeleteItem(item.id)}
+            {items.map(item => {
+              const parsed = parseCommaSeparatedItems(item.name);
+              const isConditionalItem = parsed.hasCondition;
+              const backgroundColor = isConditionalItem ? '#ffe6f2' : '#fff'; // 薄ピンク色
+              
+              return (
+                <div
+                  key={item.id}
                   style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    backgroundColor: '#ff6b6b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '3px',
-                    cursor: 'pointer'
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px',
+                    backgroundColor,
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                   }}
                 >
-                  削除
-                </button>
-              </div>
-            ))}
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '16px' }}>{item.name}</span>
+                    {isConditionalItem && (
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#e91e63', 
+                        marginTop: '4px',
+                        fontStyle: 'italic'
+                      }}>
+                        💡 条件: 安い方を買う
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => onDeleteItem(item.id)}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '12px',
+                      backgroundColor: '#ff6b6b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      marginLeft: '10px'
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
