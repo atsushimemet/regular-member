@@ -3,6 +3,7 @@ import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
+import RakutenCardAffiliate from './components/RakutenCardAffiliate';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -212,6 +213,7 @@ function AppContent() {
           </div>
 
           <CommaSeparatedHelp />
+          <RakutenCardAffiliate />
 
         </div>
       </div>
@@ -336,6 +338,7 @@ function AppContent() {
         </div>
 
         <CommaSeparatedHelp />
+        <RakutenCardAffiliate />
 
       </div>
     </div>
