@@ -16,11 +16,12 @@ const LineShareText: React.FC<Props> = ({ items }) => {
 
   // カンマ区切りの商品を解析する関数
   const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-    // ,newまたは,tiredで終わる場合は最後の要素を除外して判定
+    // ,new、,tired、,emerで終わる場合は最後の要素を除外して判定
     const isNewItem = name.trim().endsWith(',new');
     const isTiredItem = name.trim().endsWith(',tired');
-    const nameWithoutSuffix = isNewItem || isTiredItem ? 
-      name.trim().replace(/,\s*(new|tired)$/, '') : name;
+    const isEmerItem = name.trim().endsWith(',emer');
+    const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem ? 
+      name.trim().replace(/,\s*(new|tired|emer)$/, '') : name;
     
     const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
     
@@ -48,9 +49,14 @@ const LineShareText: React.FC<Props> = ({ items }) => {
     return name.trim().endsWith(',tired');
   };
 
-  // 表示用の商品名を取得する関数（,newと,tiredを除去）
+  // 非常食商品かどうかを判定する関数
+  const isEmerItem = (name: string): boolean => {
+    return name.trim().endsWith(',emer');
+  };
+
+  // 表示用の商品名を取得する関数（,new、,tired、,emerを除去）
   const getDisplayName = (name: string): string => {
-    return name.trim().replace(/,\s*(new|tired)$/, '');
+    return name.trim().replace(/,\s*(new|tired|emer)$/, '');
   };
 
   // LINEで共有するテキストを生成
@@ -74,6 +80,7 @@ const LineShareText: React.FC<Props> = ({ items }) => {
         const parsed = parseCommaSeparatedItems(item.name);
         const isNewItemFlag = isNewItem(item.name);
         const isTiredItemFlag = isTiredItem(item.name);
+        const isEmerItemFlag = isEmerItem(item.name);
         const displayName = getDisplayName(item.name);
         
         text += `・${displayName}`;
@@ -82,6 +89,9 @@ const LineShareText: React.FC<Props> = ({ items }) => {
         }
         if (isTiredItemFlag) {
           text += ` 😴元気ない時に買う`;
+        }
+        if (isEmerItemFlag) {
+          text += ` 🚨非常食`;
         }
         if (parsed.hasCondition) {
           text += ` 💡条件: 安い方を買う`;
