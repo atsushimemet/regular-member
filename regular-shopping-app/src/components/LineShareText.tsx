@@ -16,10 +16,14 @@ const LineShareText: React.FC<Props> = ({ items }) => {
 
   // カンマ区切りの商品を解析する関数
   const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-    const items = name.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    // ,newで終わる場合は最後の要素を除外して判定
+    const isNewItem = name.trim().endsWith(',new');
+    const nameWithoutNew = isNewItem ? name.trim().replace(/,\s*new$/, '') : name;
     
-    // 2商品の場合のみ条件を適用
-    if (items.length === 2) {
+    const items = nameWithoutNew.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    
+    // 2商品以上の場合に条件を適用
+    if (items.length >= 2) {
       return {
         items,
         hasCondition: true
@@ -30,6 +34,16 @@ const LineShareText: React.FC<Props> = ({ items }) => {
       items: [name],
       hasCondition: false
     };
+  };
+
+  // 新規商品かどうかを判定する関数
+  const isNewItem = (name: string): boolean => {
+    return name.trim().endsWith(',new');
+  };
+
+  // 表示用の商品名を取得する関数（,newを除去）
+  const getDisplayName = (name: string): string => {
+    return name.trim().replace(/,\s*new$/, '');
   };
 
   // LINEで共有するテキストを生成
@@ -51,7 +65,13 @@ const LineShareText: React.FC<Props> = ({ items }) => {
       text += `【${category.name}】\n`;
       items.forEach(item => {
         const parsed = parseCommaSeparatedItems(item.name);
-        text += `・${item.name}`;
+        const isNewItemFlag = isNewItem(item.name);
+        const displayName = getDisplayName(item.name);
+        
+        text += `・${displayName}`;
+        if (isNewItemFlag) {
+          text += ` 🤔本当に必要？`;
+        }
         if (parsed.hasCondition) {
           text += ` 💡条件: 安い方を買う`;
         }

@@ -8,10 +8,14 @@ interface Props {
 
 // カンマ区切りの商品を解析する関数
 const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-  const items = name.split(',').map(item => item.trim()).filter(item => item.length > 0);
+  // ,newで終わる場合は最後の要素を除外して判定
+  const isNewItem = name.trim().endsWith(',new');
+  const nameWithoutNew = isNewItem ? name.trim().replace(/,\s*new$/, '') : name;
   
-  // 2商品の場合のみ条件を適用
-  if (items.length === 2) {
+  const items = nameWithoutNew.split(',').map(item => item.trim()).filter(item => item.length > 0);
+  
+  // 2商品以上の場合に条件を適用
+  if (items.length >= 2) {
     return {
       items,
       hasCondition: true
@@ -22,6 +26,16 @@ const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition
     items: [name],
     hasCondition: false
   };
+};
+
+// 新規商品かどうかを判定する関数
+const isNewItem = (name: string): boolean => {
+  return name.trim().endsWith(',new');
+};
+
+// 表示用の商品名を取得する関数（,newを除去）
+const getDisplayName = (name: string): string => {
+  return name.trim().replace(/,\s*new$/, '');
 };
 
 const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
@@ -57,7 +71,18 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
             {items.map(item => {
               const parsed = parseCommaSeparatedItems(item.name);
               const isConditionalItem = parsed.hasCondition;
-              const backgroundColor = isConditionalItem ? '#ffe6f2' : '#fff'; // 薄ピンク色
+              const isNewItemFlag = isNewItem(item.name);
+              const displayName = getDisplayName(item.name);
+              
+              // 背景色の決定（優先順位: 新規かつ条件付き > 新規 > 条件付き > 通常）
+              let backgroundColor = '#fff';
+              if (isNewItemFlag && isConditionalItem) {
+                backgroundColor = '#e8f5e8'; // 薄い緑色（新規かつ条件付き）
+              } else if (isNewItemFlag) {
+                backgroundColor = '#e3f2fd'; // 薄い青色（新規のみ）
+              } else if (isConditionalItem) {
+                backgroundColor = '#ffe6f2'; // 薄ピンク色（条件付きのみ）
+              }
               
               return (
                 <div
@@ -74,7 +99,17 @@ const RegularItemsList: React.FC<Props> = ({ items, onDeleteItem }) => {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '16px' }}>{item.name}</span>
+                    <span style={{ fontSize: '16px' }}>{displayName}</span>
+                    {isNewItemFlag && (
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#1976d2', 
+                        marginTop: '4px',
+                        fontStyle: 'italic'
+                      }}>
+                        🤔 本当に必要？
+                      </div>
+                    )}
                     {isConditionalItem && (
                       <div style={{ 
                         fontSize: '12px', 
