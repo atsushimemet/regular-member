@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
-import LineShareText from './components/LineShareText';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -208,7 +207,6 @@ function AppContent() {
             </button>
           </div>
 
-          <LineShareText items={items} />
         </div>
       </div>
     );
@@ -328,7 +326,6 @@ function AppContent() {
           </button>
         </div>
 
-        <LineShareText items={items} />
       </div>
     </div>
   );
