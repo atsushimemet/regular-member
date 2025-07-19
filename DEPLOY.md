@@ -176,8 +176,9 @@ DB_NAME=postgres
 DB_USER=postgres
 DB_PASSWORD=your-supabase-password
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-FRONTEND_URL=https://your-frontend-app.onrender.com
 ```
+
+**注意**: FRONTEND_URLは今回のアプリケーションでは使用しないため、設定不要です。
 
 ### 2.3 従来のNode.js環境でのデプロイ設定（代替）
 もしDocker環境を使用しない場合は、以下の設定を使用：
@@ -208,6 +209,8 @@ Renderダッシュボードで以下のDocker設定を行います：
 REACT_APP_API_URL=https://your-api-app.onrender.com/api
 ```
 
+**重要**: この環境変数は、フロントエンドがバックエンドAPIにアクセスするために必要です。
+
 ### 3.2 従来のStatic Site環境でのデプロイ設定（代替）
 もしDocker環境を使用しない場合は、以下の設定を使用：
 
@@ -220,14 +223,34 @@ REACT_APP_API_URL=https://your-api-app.onrender.com/api
 2. デプロイが完了するまで待機
 3. フロントエンドのURLをメモ（例: `https://your-frontend-app.onrender.com`）
 
-## 4. 本番環境のテスト
+## 4. アプリケーションへのアクセス
 
-### 4.1 データベース接続テスト
+### 4.1 メインアプリケーション
+**フロントエンドのURL**にアクセスしてください：
+```
+https://your-frontend-app.onrender.com
+```
+
+### 4.2 APIエンドポイント（開発者用）
+バックエンドAPIに直接アクセスする場合：
+```
+https://your-api-app.onrender.com/api
+```
+
+### 4.3 データベース（管理用）
+Supabaseダッシュボードで管理：
+```
+https://supabase.com/dashboard/project/your-project-id
+```
+
+## 5. 本番環境のテスト
+
+### 5.1 データベース接続テスト
 1. Supabaseダッシュボードで「Table Editor」を開く
 2. アプリケーションから夫婦登録を実行
 3. `couples`テーブルにデータが作成されることを確認
 
-### 4.2 API接続テスト
+### 5.2 API接続テスト
 ```bash
 # APIのヘルスチェック
 curl https://your-api-app.onrender.com/api/health
@@ -238,52 +261,52 @@ curl -X POST https://your-api-app.onrender.com/api/auth/register \
   -d '{"couple_id":"test123","couple_name":"テスト夫婦","password":"password123"}'
 ```
 
-### 4.3 フロントエンドテスト
+### 5.3 フロントエンドテスト
 1. ブラウザでフロントエンドURLにアクセス
 2. 夫婦登録・ログイン機能をテスト
 3. レギュラーメンバーの追加・削除をテスト
 
-## 5. ドメイン設定（オプション）
+## 6. ドメイン設定（オプション）
 
-### 5.1 カスタムドメインの設定
+### 6.1 カスタムドメインの設定
 1. Renderダッシュボードで「Settings」→「Custom Domains」を開く
 2. カスタムドメインを追加
 3. DNSレコードを設定
 
-### 5.2 HTTPS設定
+### 6.2 HTTPS設定
 - Renderは自動的にSSL証明書を提供
 - カスタムドメインでも自動的にHTTPSが有効
 
-## 6. 監視とログ
+## 7. 監視とログ
 
-### 6.1 Renderログの確認
+### 7.1 Renderログの確認
 1. Renderダッシュボードで「Logs」タブを開く
 2. リアルタイムログを確認
 3. エラーが発生した場合はログを確認
 
-### 6.2 Supabase監視
+### 7.2 Supabase監視
 1. Supabaseダッシュボードで「Database」→「Logs」を開く
 2. データベースクエリの実行状況を確認
 3. パフォーマンスメトリクスを監視
 
-## 7. セキュリティ設定
+## 8. セキュリティ設定
 
-### 7.1 環境変数の管理
+### 8.1 環境変数の管理
 - 本番環境のJWT_SECRETは強力なランダム文字列を使用
 - データベースパスワードは定期的に更新
 - 環境変数はGitにコミットしない
 
-### 7.2 CORS設定
+### 8.2 CORS設定
 - フロントエンドのドメインのみを許可
 - 本番環境では適切なCORS設定を確認
 
-### 7.3 データベースセキュリティ
+### 8.3 データベースセキュリティ
 - SupabaseのRow Level Security (RLS)を有効化
 - 必要に応じてIP制限を設定
 
-## 8. トラブルシューティング
+## 9. トラブルシューティング
 
-### 8.1 よくある問題
+### 9.1 よくある問題
 
 **APIが起動しない**
 ```bash
@@ -321,33 +344,33 @@ curl -X POST https://your-api-app.onrender.com/api/auth/register \
 # コンテナ内のポート設定を確認
 ```
 
-### 8.2 ロールバック手順
+### 9.2 ロールバック手順
 1. Renderダッシュボードで「Manual Deploy」を開く
 2. 以前のバージョンを選択
 3. 「Deploy Latest Commit」をクリック
 
-## 9. 運用管理
+## 10. 運用管理
 
-### 9.1 バックアップ
+### 10.1 バックアップ
 - Supabaseは自動バックアップを提供
 - 定期的にデータベースのバックアップを確認
 
-### 9.2 スケーリング
+### 10.2 スケーリング
 - Renderは自動スケーリングを提供
 - 必要に応じて手動でスケールアップ
 
-### 9.3 更新手順
+### 10.3 更新手順
 1. コードをGitHubにプッシュ
 2. Renderが自動的にデプロイを開始
 3. デプロイ完了後に動作確認
 
-## 10. コスト管理
+## 11. コスト管理
 
-### 10.1 Render料金
+### 11.1 Render料金
 - フリープラン: 月512時間
 - 有料プラン: 月$7から
 
-### 10.2 Supabase料金
+### 11.2 Supabase料金
 - フリープラン: 月500MB、2プロジェクト
 - 有料プラン: 月$25から
 
