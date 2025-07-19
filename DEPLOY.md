@@ -103,7 +103,24 @@ postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxxxxx.supabase.co:5432/postgres
    - User: `postgres`
    - Password: `[YOUR-PASSWORD]`の部分
 
-**代替方法2: 個別の接続情報から取得**
+**代替方法2: Session poolerを使用する場合**
+もしDirect connectionで問題が発生する場合は、Session poolerを使用できます：
+
+1. 「Settings」→「Database」で「Session pooler」セクションを開く
+2. **Connection string**を確認：
+   ```
+   postgresql://postgres.xxxxxxxxxxxxx:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+   ```
+3. この文字列から各要素を抽出：
+   - Host: `aws-0-[REGION].pooler.supabase.com`
+   - Port: `5432`（Session poolerは通常5432ポートを使用）
+   - Database: `postgres`
+   - User: `postgres.xxxxxxxxxxxxx`（通常のpostgresとは異なる場合がある）
+   - Password: `[YOUR-PASSWORD]`の部分
+
+**注意**: Session poolerを使用する場合、ユーザーIDが`postgres.xxxxxxxxxxxxx`のような形式になることがあります。
+
+**代替方法3: 個別の接続情報から取得**
 1. 「Settings」→「Database」で「Direct connection」セクションを開く
 2. 以下の項目を個別に確認：
    - **Host**: データベースのホスト名
@@ -112,7 +129,7 @@ postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxxxxxx.supabase.co:5432/postgres
    - **User**: 通常は `postgres`
    - **Password**: プロジェクト作成時に設定したパスワード
 
-**代替方法3: API Keysから取得（参考）**
+**代替方法4: API Keysから取得（参考）**
 1. 「Settings」→「API」を開く
 2. 「Project API keys」セクションで「anon public」キーを確認
 3. または「service_role secret」キーを確認（注意: このキーは機密情報）
@@ -179,6 +196,20 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 ```
 
 **注意**: FRONTEND_URLは今回のアプリケーションでは使用しないため、設定不要です。
+
+**Session poolerを使用する場合の環境変数例**:
+```
+NODE_ENV=production
+PORT=10000
+DB_HOST=aws-0-ap-northeast-1.pooler.supabase.com
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres.xxxxxxxxxxxxx
+DB_PASSWORD=your-supabase-password
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+```
+
+**重要**: Session poolerを使用する場合は、ポート番号が`5432`になり、ユーザーIDが`postgres.xxxxxxxxxxxxx`のような形式になることがあります。
 
 ### 2.3 従来のNode.js環境でのデプロイ設定（代替）
 もしDocker環境を使用しない場合は、以下の設定を使用：
@@ -327,6 +358,13 @@ curl -X POST https://your-api-app.onrender.com/api/auth/register \
 # Supabaseの接続情報を確認
 # ファイアウォール設定を確認
 # データベースが起動しているか確認
+```
+
+**Session poolerを使用する場合の注意点**
+```bash
+# ユーザーIDがpostgres.xxxxxxxxxxxxxのような形式になっているか確認
+# ポート番号が5432になっているか確認
+# Connection stringから正確に接続情報を抽出
 ```
 
 **フロントエンドがAPIに接続できない**
