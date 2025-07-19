@@ -117,7 +117,6 @@ const RegularItemsList: React.FC<Props> = ({
 
   return (
     <div>
-      <h3>レギュラーメンバー（スーパーでの順番）</h3>
       {itemsByCategory.map(({ category, items }) => (
         <div key={category.id} style={{ marginBottom: '20px' }}>
           <h4 style={{ 
