@@ -1,14 +1,17 @@
 // 商品カテゴリの定義
 export const CATEGORIES = [
   { id: 'vegetables', name: '野菜・生鮮', order: 1 },
-  { id: 'meat', name: '肉類', order: 2 },
-  { id: 'fish', name: '魚類', order: 3 },
-  { id: 'dairy', name: '乳製品', order: 4 },
-  { id: 'bread', name: 'パン', order: 5 },
-  { id: 'beverages', name: '飲み物', order: 6 },
-  { id: 'frozen', name: '冷凍食品', order: 7 },
-  { id: 'snacks', name: 'お菓子', order: 8 },
-  { id: 'other', name: 'その他', order: 9 }
+  { id: 'beans', name: '豆類', order: 2 },
+  { id: 'mushrooms', name: 'きのこ類', order: 3 },
+  { id: 'fruits', name: '果物', order: 4 },
+  { id: 'meat', name: '肉類', order: 5 },
+  { id: 'fish', name: '魚類', order: 6 },
+  { id: 'dairy', name: '乳製品', order: 7 },
+  { id: 'bread', name: 'パン', order: 8 },
+  { id: 'beverages', name: '飲み物', order: 9 },
+  { id: 'frozen', name: '冷凍食品', order: 10 },
+  { id: 'snacks', name: 'お菓子', order: 11 },
+  { id: 'other', name: 'その他', order: 12 }
 ] as const;
 
 export type CategoryId = typeof CATEGORIES[number]['id'];
