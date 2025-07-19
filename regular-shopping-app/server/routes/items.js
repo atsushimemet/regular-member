@@ -3,6 +3,82 @@ const pool = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
+// 共有IDを保存
+router.post('/share', authenticateToken, async (req, res) => {
+  try {
+    const { coupleId } = req.user;
+    const { shareId } = req.body;
+
+    if (!shareId) {
+      return res.status(400).json({ error: 'Share ID is required' });
+    }
+
+    // 既存の共有IDを削除してから新しいものを保存
+    await pool.query(
+      'DELETE FROM share_links WHERE couple_id = $1',
+      [coupleId]
+    );
+
+    await pool.query(
+      'INSERT INTO share_links (share_id, couple_id) VALUES ($1, $2)',
+      [shareId, coupleId]
+    );
+
+    res.json({ message: 'Share ID saved successfully' });
+
+  } catch (error) {
+    console.error('Save share ID error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 共有用のレギュラーアイテム一覧取得（認証不要）
+router.get('/shared/:shareId', async (req, res) => {
+  try {
+    const { shareId } = req.params;
+
+    // 共有IDから夫婦IDを取得
+    const shareResult = await pool.query(
+      'SELECT couple_id FROM share_links WHERE share_id = $1',
+      [shareId]
+    );
+
+    if (shareResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Invalid share ID' });
+    }
+
+    const coupleId = shareResult.rows[0].couple_id;
+
+    // 夫婦IDが存在するかチェック
+    const coupleCheck = await pool.query(
+      'SELECT couple_id FROM couples WHERE couple_id = $1',
+      [coupleId]
+    );
+
+    if (coupleCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Invalid share ID' });
+    }
+
+    const result = await pool.query(
+      'SELECT item_id, name, category_id, created_at FROM regular_items WHERE couple_id = $1 ORDER BY created_at ASC',
+      [coupleId]
+    );
+
+    const items = result.rows.map(row => ({
+      id: row.item_id,
+      name: row.name,
+      categoryId: row.category_id,
+      createdAt: row.created_at
+    }));
+
+    res.json({ items });
+
+  } catch (error) {
+    console.error('Get shared items error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // レギュラーアイテム一覧取得
 router.get('/', authenticateToken, async (req, res) => {
   try {

@@ -1,13 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiClient } from '../utils/api';
+import { generateShareId, generateShareUrl } from '../utils/shareUtils';
 
 const ShareUrl: React.FC = () => {
   const [copied, setCopied] = useState(false);
+  const [shareId, setShareId] = useState<string>('');
   const { couple, logout } = useAuth();
 
-  if (!couple) return null;
+  // 共有IDを生成または取得
+  useEffect(() => {
+    if (couple) {
+      // ローカルストレージから既存の共有IDを取得、なければ新規生成
+      const storedShareId = localStorage.getItem(`shareId_${couple.coupleId}`);
+      if (storedShareId) {
+        setShareId(storedShareId);
+      } else {
+        const newShareId = generateShareId();
+        setShareId(newShareId);
+        localStorage.setItem(`shareId_${couple.coupleId}`, newShareId);
+        
+        // データベースに共有IDを保存
+        apiClient.saveShareId(newShareId).catch(error => {
+          console.error('Failed to save share ID:', error);
+        });
+      }
+    }
+  }, [couple]);
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}?couple=${couple.coupleId}`;
+  if (!couple || !shareId) return null;
+
+  const shareUrl = generateShareUrl(shareId);
 
   const handleCopy = async () => {
     try {
@@ -125,7 +148,8 @@ const ShareUrl: React.FC = () => {
         lineHeight: '1.4'
       }}>
         このURLをパートナーと共有すると、同じレギュラーメンバーリストを見ることができます。
-        パートナーは同じ夫婦IDとパスワードでログインする必要があります。
+        パートナーはログイン不要で、誰でもこのURLからリストを確認できます。
+        共有IDは64文字のランダムな文字列で、セキュリティが向上しています。
       </p>
     </div>
   );

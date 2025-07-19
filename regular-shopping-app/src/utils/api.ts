@@ -1,4 +1,4 @@
-import { AuthResponse, RegularItem, ItemsResponse, Couple } from '../types';
+import { AuthResponse, Couple, ItemsResponse, RegularItem } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -72,6 +72,39 @@ class ApiClient {
       ...item,
       createdAt: new Date(item.createdAt)
     }));
+  }
+
+  // 共有用のアイテム取得（認証不要）
+  async getSharedItems(shareId: string): Promise<RegularItem[]> {
+    const response = await fetch(`${API_BASE_URL}/items/shared/${shareId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch shared items');
+    }
+
+    const data: ItemsResponse = await response.json();
+    return data.items.map(item => ({
+      ...item,
+      createdAt: new Date(item.createdAt)
+    }));
+  }
+
+  // 共有IDを保存
+  async saveShareId(shareId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/items/share`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ shareId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to save share ID');
+    }
   }
 
   async addItem(name: string, categoryId: string): Promise<RegularItem> {

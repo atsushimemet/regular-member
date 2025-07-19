@@ -8,6 +8,7 @@ interface Props {
   setInventoryState: React.Dispatch<React.SetStateAction<{[itemId: string]: 'unknown' | 'available' | 'unavailable'}>>;
   checkedItems: Set<string>;
   setCheckedItems: React.Dispatch<React.SetStateAction<Set<string>>>;
+  isReadOnly?: boolean;
 }
 
 // 在庫状態の型定義
@@ -75,7 +76,8 @@ const RegularItemsList: React.FC<Props> = ({
   inventoryState, 
   setInventoryState, 
   checkedItems, 
-  setCheckedItems 
+  setCheckedItems,
+  isReadOnly 
 }) => {
   // 在庫状態を更新する関数
   const updateInventoryStatus = (itemId: string, status: InventoryStatus) => {
@@ -252,54 +254,58 @@ const RegularItemsList: React.FC<Props> = ({
                   {/* 在庫確認ボタンと削除ボタン */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '10px' }}>
                     {/* 1行目: 在庫確認ボタン */}
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button
-                        onClick={() => updateInventoryStatus(item.id, 'available')}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '11px',
-                          backgroundColor: currentStatus === 'available' ? '#4caf50' : '#e0e0e0',
-                          color: currentStatus === 'available' ? 'white' : '#333',
-                          border: '1px solid #ccc',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          minWidth: '40px'
-                        }}
-                      >
-                        ある
-                      </button>
-                      <button
-                        onClick={() => updateInventoryStatus(item.id, 'unavailable')}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '11px',
-                          backgroundColor: currentStatus === 'unavailable' ? '#f44336' : '#e0e0e0',
-                          color: currentStatus === 'unavailable' ? 'white' : '#333',
-                          border: '1px solid #ccc',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          minWidth: '40px'
-                        }}
-                      >
-                        ない
-                      </button>
-                    </div>
+                    {!isReadOnly && (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          onClick={() => updateInventoryStatus(item.id, 'available')}
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            backgroundColor: currentStatus === 'available' ? '#4caf50' : '#e0e0e0',
+                            color: currentStatus === 'available' ? 'white' : '#333',
+                            border: '1px solid #ccc',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            minWidth: '40px'
+                          }}
+                        >
+                          ある
+                        </button>
+                        <button
+                          onClick={() => updateInventoryStatus(item.id, 'unavailable')}
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            backgroundColor: currentStatus === 'unavailable' ? '#f44336' : '#e0e0e0',
+                            color: currentStatus === 'unavailable' ? 'white' : '#333',
+                            border: '1px solid #ccc',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            minWidth: '40px'
+                          }}
+                        >
+                          ない
+                        </button>
+                      </div>
+                    )}
                     
                     {/* 2行目: 削除ボタン */}
-                    <button
-                      onClick={() => onDeleteItem(item.id)}
-                      style={{
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                        backgroundColor: '#ff6b6b',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '3px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      削除
-                    </button>
+                    {!isReadOnly && (
+                      <button
+                        onClick={() => onDeleteItem(item.id)}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          backgroundColor: '#ff6b6b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '3px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        削除
+                      </button>
+                    )}
                   </div>
                 </div>
               );
