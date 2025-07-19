@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL データベース
   db:
@@ -24,7 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile.api
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3001
       DB_HOST: db
       DB_PORT: 5432
@@ -40,37 +38,38 @@ services:
         condition: service_healthy
     volumes:
       - ./server:/app/server
-    profiles:
-      - api
 
-  # フロントエンド（本番環境）
-  regular-shopping-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80"
-    environment:
-      REACT_APP_API_URL: http://localhost:3001/api
-    depends_on:
-      - api
-    profiles:
-      - frontend
-
-  # 開発環境用フロントエンド
-  regular-shopping-app-dev:
+  # フロントエンド（開発環境）
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "3001:3000"
+      - "3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
     environment:
       REACT_APP_API_URL: http://localhost:3001/api
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - api
+    stdin_open: true
+    tty: true
+
+  # フロントエンド（本番環境）
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001/api
+    depends_on:
+      - api
     profiles:
-      - dev
+      - production
 
 volumes:
   postgres_data:

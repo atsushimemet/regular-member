@@ -29,7 +29,122 @@
 ### 必要なもの
 - Node.js 18+
 - PostgreSQL 15+
-- Docker & Docker Compose（オプション）
+- Docker & Docker Compose（推奨）
+
+### Docker環境（推奨）
+
+#### 1. 開発環境の起動
+```bash
+# プロジェクトディレクトリに移動
+cd regular-shopping-app
+
+# 全てのサービスを起動（バックグラウンド）
+docker compose up -d
+
+# または、ログを確認しながら起動
+docker compose up
+```
+
+#### 2. 起動確認
+```bash
+# 全てのコンテナの状態を確認
+docker compose ps
+
+# 各サービスのログを確認
+docker compose logs -f          # 全てのサービスのログ
+docker compose logs -f frontend # フロントエンドのログ
+docker compose logs -f api      # APIのログ
+docker compose logs -f db       # データベースのログ
+```
+
+#### 3. データベースのセットアップ（初回のみ）
+```bash
+# データベースが起動するまで少し待ってから実行
+docker compose exec api npm run db:setup
+```
+
+#### 4. アプリケーションへのアクセス
+- **フロントエンド**: http://localhost:3000
+- **API**: http://localhost:3001
+- **データベース**: localhost:5432
+
+#### 5. 開発時の便利なコマンド
+```bash
+# コンテナ内でコマンド実行
+docker compose exec frontend npm install  # フロントエンドに依存関係追加
+docker compose exec api npm install       # APIに依存関係追加
+
+# コンテナ内でシェル実行
+docker compose exec frontend sh
+docker compose exec api sh
+docker compose exec db psql -U postgres -d regular_shopping
+
+# 特定のサービスの再起動
+docker compose restart frontend
+docker compose restart api
+docker compose restart db
+
+# イメージの再ビルド（コード変更後）
+docker compose build
+docker compose up -d
+```
+
+#### 6. 開発環境の停止
+```bash
+# 全てのサービスを停止
+docker compose down
+
+# データベースのデータも削除して完全にクリーンアップ
+docker compose down -v
+```
+
+#### 7. トラブルシューティング
+
+**ポートが既に使用されている場合**
+```bash
+# 使用中のポートを確認
+lsof -i :3000
+lsof -i :3001
+lsof -i :5432
+
+# 既存のコンテナを停止
+docker compose down
+docker system prune -f
+```
+
+**依存関係の問題**
+```bash
+# コンテナを再ビルド
+docker compose build --no-cache
+docker compose up -d
+```
+
+**データベース接続エラー**
+```bash
+# データベースの状態確認
+docker compose logs db
+
+# データベースを再起動
+docker compose restart db
+
+# データベースセットアップを再実行
+docker compose exec api npm run db:setup
+```
+
+**フロントエンドが起動しない**
+```bash
+# フロントエンドのログ確認
+docker compose logs frontend
+
+# node_modulesを再インストール
+docker compose exec frontend rm -rf node_modules package-lock.json
+docker compose exec frontend npm install
+```
+
+#### 8. 本番環境での起動
+```bash
+docker compose --profile production up -d
+```
 
 ### 通常のNode.js環境
 
@@ -74,39 +189,6 @@ npm start       # フロントエンド（ポート3000）
 #### 6. 本番用ビルド
 ```bash
 npm run build
-```
-
-### Docker環境
-
-#### 1. 開発環境での起動
-```bash
-# データベースとAPIサーバーを起動
-docker compose --profile api up -d
-
-# フロントエンド開発サーバーを起動（別ターミナル）
-npm start
-```
-
-#### 2. 本番環境での起動
-```bash
-# 全てのサービスを起動（DB + API + フロントエンド）
-docker compose --profile frontend --profile api up -d
-```
-
-#### 3. データベースのセットアップ（初回のみ）
-```bash
-# コンテナ内でデータベースセットアップを実行
-docker compose exec api npm run db:setup
-```
-
-#### 4. コンテナの停止
-```bash
-docker compose down
-```
-
-#### 5. イメージの再ビルド
-```bash
-docker compose build
 ```
 
 ## 技術スタック
