@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
+import CommaSeparatedHelp from './components/CommaSeparatedHelp';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -140,14 +141,17 @@ function AppContent() {
           <header style={{ textAlign: 'center', marginBottom: '30px' }}>
             <h1 style={{ 
               color: '#333', 
-              fontSize: '28px',
-              marginBottom: '10px'
+              fontSize: 'clamp(20px, 4vw, 28px)',
+              marginBottom: '10px',
+              lineHeight: '1.2',
+              wordBreak: 'keep-all',
+              overflowWrap: 'break-word'
             }}>
               🛒 レギュラーメンバー（共有ビュー）
             </h1>
             <p style={{ 
               color: '#666', 
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3vw, 16px)',
               margin: '0'
             }}>
               共有されたお買い物リスト
@@ -207,6 +211,8 @@ function AppContent() {
             </button>
           </div>
 
+          <CommaSeparatedHelp />
+
         </div>
       </div>
     );
@@ -228,14 +234,17 @@ function AppContent() {
         <header style={{ textAlign: 'center', marginBottom: '30px' }}>
           <h1 style={{ 
             color: '#333', 
-            fontSize: '28px',
-            marginBottom: '10px'
+            fontSize: 'clamp(20px, 4vw, 28px)',
+            marginBottom: '10px',
+            lineHeight: '1.2',
+            wordBreak: 'keep-all',
+            overflowWrap: 'break-word'
           }}>
             🛒 レギュラーメンバー管理
           </h1>
           <p style={{ 
             color: '#666', 
-            fontSize: '16px',
+            fontSize: 'clamp(14px, 3vw, 16px)',
             margin: '0'
           }}>
             いつものお買い物リストを夫婦で共有
@@ -325,6 +334,8 @@ function AppContent() {
             🛒 買い物終了
           </button>
         </div>
+
+        <CommaSeparatedHelp />
 
       </div>
     </div>
