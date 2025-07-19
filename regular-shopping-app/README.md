@@ -18,6 +18,8 @@
 
 ## 開発環境
 
+### 通常のNode.js環境
+
 ```bash
 # 依存関係のインストール
 npm install
@@ -27,6 +29,22 @@ npm start
 
 # 本番用ビルド
 npm run build
+```
+
+### Docker環境
+
+```bash
+# 本番環境でのコンテナ起動（ポート3000）
+docker-compose up -d
+
+# 開発環境でのコンテナ起動（ポート3001）
+docker-compose --profile dev up -d regular-shopping-app-dev
+
+# コンテナの停止
+docker-compose down
+
+# イメージの再ビルド
+docker-compose build
 ```
 
 ## 技術スタック
