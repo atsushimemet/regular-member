@@ -1,5 +1,6 @@
 import React from 'react';
 import { CATEGORIES, RegularItem } from '../types';
+import { trackInventoryUpdate, trackItemChecked, trackItemDeleted } from '../utils/ga4';
 
 interface Props {
   items: RegularItem[];
@@ -81,6 +82,14 @@ const RegularItemsList: React.FC<Props> = ({
 }) => {
   // 在庫状態を更新する関数
   const updateInventoryStatus = (itemId: string, status: InventoryStatus) => {
+    const item = items.find(i => i.id === itemId);
+    if (item && (status === 'available' || status === 'unavailable')) {
+      const displayName = getDisplayName(item.name);
+      
+      // GA4イベントを送信
+      trackInventoryUpdate(status, displayName);
+    }
+    
     setInventoryState((prev) => ({
       ...prev,
       [itemId]: status
@@ -89,6 +98,16 @@ const RegularItemsList: React.FC<Props> = ({
 
   // チェックボックスの状態を更新する関数
   const toggleCheckedItem = (itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      const category = CATEGORIES.find(cat => cat.id === item.categoryId);
+      const categoryName = category?.name || 'その他';
+      const displayName = getDisplayName(item.name);
+      
+      // GA4イベントを送信
+      trackItemChecked(categoryName, displayName);
+    }
+    
     setCheckedItems((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(itemId)) {
@@ -291,7 +310,16 @@ const RegularItemsList: React.FC<Props> = ({
                     {/* 2行目: 削除ボタン */}
                     {!isReadOnly && (
                       <button
-                        onClick={() => onDeleteItem(item.id)}
+                        onClick={() => {
+                          const category = CATEGORIES.find(cat => cat.id === item.categoryId);
+                          const categoryName = category?.name || 'その他';
+                          const displayName = getDisplayName(item.name);
+                          
+                          // GA4イベントを送信
+                          trackItemDeleted(categoryName, displayName);
+                          
+                          onDeleteItem(item.id);
+                        }}
                         style={{
                           padding: '4px 8px',
                           fontSize: '11px',

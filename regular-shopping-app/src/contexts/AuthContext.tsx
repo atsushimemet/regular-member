@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { AuthContextType, Couple } from '../types';
 import { apiClient } from '../utils/api';
+import { trackLogout } from '../utils/ga4';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -22,6 +23,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const logout = useCallback((): void => {
+    // GA4イベントを送信
+    trackLogout();
+    
     setToken(null);
     setCouple(null);
     

@@ -60,3 +60,26 @@ export interface ApiResponse<T> {
 export interface ItemsResponse {
   items: RegularItem[];
 }
+
+// GA4関連の型定義
+declare global {
+  interface Window {
+    gtag: (
+      command: 'config' | 'event' | 'js',
+      targetId: string,
+      config?: {
+        page_title?: string;
+        page_location?: string;
+        [key: string]: any;
+      }
+    ) => void;
+    dataLayer: any[];
+  }
+}
+
+export interface GA4Event {
+  action: string;
+  category: string;
+  label?: string;
+  value?: number;
+}
