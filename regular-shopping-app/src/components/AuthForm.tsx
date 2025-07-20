@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { trackLogin, trackRegister } from '../utils/ga4';
 
 const AuthForm: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,11 +20,15 @@ const AuthForm: React.FC = () => {
     try {
       if (isLogin) {
         await login(coupleId, password);
+        // GA4イベントを送信
+        trackLogin(coupleId);
       } else {
         if (!coupleName.trim()) {
           throw new Error('夫婦名を入力してください');
         }
         await register(coupleId, coupleName, password);
+        // GA4イベントを送信
+        trackRegister(coupleId);
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : '認証に失敗しました');

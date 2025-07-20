@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CATEGORIES, CategoryId, RegularItem } from '../types';
+import { trackItemAdded } from '../utils/ga4';
 
 interface Props {
   onAddItem: (item: Omit<RegularItem, 'id' | 'createdAt'>) => void;
@@ -28,6 +29,12 @@ const AddItemForm: React.FC<Props> = ({ onAddItem }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
+      const selectedCategory = CATEGORIES.find(cat => cat.id === categoryId);
+      const categoryName = selectedCategory?.name || 'その他';
+      
+      // GA4イベントを送信
+      trackItemAdded(categoryName, name.trim());
+      
       onAddItem({
         name: name.trim(),
         categoryId

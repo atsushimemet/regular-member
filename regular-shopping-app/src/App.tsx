@@ -9,6 +9,7 @@ import ShareUrl from './components/ShareUrl';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { RegularItem } from './types';
 import { apiClient } from './utils/api';
+import { trackPageView } from './utils/ga4';
 import { getShareIdFromUrl, isValidShareId } from './utils/shareUtils';
 
 function AppContent() {
@@ -21,6 +22,11 @@ function AppContent() {
   const [sharedCoupleId, setSharedCoupleId] = useState<string | null>(null);
   
   const { couple, isLoading: authLoading } = useAuth();
+
+  // ページビューのトラッキング
+  useEffect(() => {
+    trackPageView();
+  }, []);
 
   // 共有URLからのアクセスをチェック
   useEffect(() => {
