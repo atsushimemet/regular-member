@@ -3,6 +3,7 @@ import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
+import LineShoppingListTextarea from './components/LineShoppingListTextarea';
 import RakutenCardAffiliate from './components/RakutenCardAffiliate';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
