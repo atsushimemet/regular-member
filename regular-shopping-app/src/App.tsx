@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import AddItemForm from './components/AddItemForm';
+import AdditionalShoppingList from './components/AdditionalShoppingList';
 import AuthForm from './components/AuthForm';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
 import LineShoppingListShare from './components/LineShoppingListShare';
@@ -194,6 +195,9 @@ function AppContent() {
             </>
           )}
 
+          {/* 追加の買い物リスト */}
+          <AdditionalShoppingList />
+
           {/* 買い物終了ボタン */}
           <div style={{ 
             textAlign: 'center', 
@@ -326,6 +330,9 @@ function AppContent() {
             />
           </>
         )}
+
+        {/* 追加の買い物リスト */}
+        <AdditionalShoppingList />
 
         {/* 買い物終了ボタン */}
         <div style={{ 
