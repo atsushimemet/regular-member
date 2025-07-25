@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import AddItemForm from './components/AddItemForm';
-import AdditionalShoppingList from './components/AdditionalShoppingList';
 import AuthForm from './components/AuthForm';
+import BenchMemberList from './components/BenchMemberList';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
 import LineShoppingListShare from './components/LineShoppingListShare';
 import RakutenCardAffiliate from './components/RakutenCardAffiliate';
@@ -187,6 +187,12 @@ function AppContent() {
                 isReadOnly={false}
               />
               
+              <BenchMemberList 
+                items={items}
+                checkedItems={checkedItems}
+                setCheckedItems={setCheckedItems}
+              />
+
               <LineShoppingListShare 
                 items={items}
                 checkedItems={checkedItems}
@@ -194,9 +200,6 @@ function AppContent() {
               />
             </>
           )}
-
-          {/* 追加の買い物リスト */}
-          <AdditionalShoppingList />
 
           {/* 買い物終了ボタン */}
           <div style={{ 
@@ -323,6 +326,12 @@ function AppContent() {
               isReadOnly={false}
             />
             
+            <BenchMemberList 
+              items={items}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+            />
+
             <LineShoppingListShare 
               items={items}
               checkedItems={checkedItems}
@@ -330,9 +339,6 @@ function AppContent() {
             />
           </>
         )}
-
-        {/* 追加の買い物リスト */}
-        <AdditionalShoppingList />
 
         {/* 買い物終了ボタン */}
         <div style={{ 
