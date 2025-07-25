@@ -3,7 +3,7 @@ import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
-import LineShoppingListTextarea from './components/LineShoppingListTextarea';
+import LineShoppingListShare from './components/LineShoppingListShare';
 import RakutenCardAffiliate from './components/RakutenCardAffiliate';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
@@ -186,7 +186,7 @@ function AppContent() {
                 isReadOnly={false}
               />
               
-              <LineShoppingListTextarea 
+              <LineShoppingListShare 
                 items={items}
                 checkedItems={checkedItems}
                 inventoryState={inventoryState}
@@ -319,7 +319,7 @@ function AppContent() {
               isReadOnly={false}
             />
             
-            <LineShoppingListTextarea 
+            <LineShoppingListShare 
               items={items}
               checkedItems={checkedItems}
               inventoryState={inventoryState}
