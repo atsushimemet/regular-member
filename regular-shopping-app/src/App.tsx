@@ -174,15 +174,23 @@ function AppContent() {
               データを読み込み中...
             </div>
           ) : (
-            <RegularItemsList 
-              items={items} 
-              onDeleteItem={() => {}} // 共有ビューでは削除不可
-              inventoryState={inventoryState}
-              setInventoryState={setInventoryState}
-              checkedItems={checkedItems}
-              setCheckedItems={setCheckedItems}
-              isReadOnly={false}
-            />
+            <>
+              <RegularItemsList 
+                items={items} 
+                onDeleteItem={() => {}} // 共有ビューでは削除不可
+                inventoryState={inventoryState}
+                setInventoryState={setInventoryState}
+                checkedItems={checkedItems}
+                setCheckedItems={setCheckedItems}
+                isReadOnly={false}
+              />
+              
+              <LineShoppingListTextarea 
+                items={items}
+                checkedItems={checkedItems}
+                inventoryState={inventoryState}
+              />
+            </>
           )}
 
           {/* 買い物終了ボタン */}
@@ -299,15 +307,23 @@ function AppContent() {
             データを読み込み中...
           </div>
         ) : (
-          <RegularItemsList 
-            items={items} 
-            onDeleteItem={handleDeleteItem}
-            inventoryState={inventoryState}
-            setInventoryState={setInventoryState}
-            checkedItems={checkedItems}
-            setCheckedItems={setCheckedItems}
-            isReadOnly={false}
-          />
+          <>
+            <RegularItemsList 
+              items={items} 
+              onDeleteItem={handleDeleteItem}
+              inventoryState={inventoryState}
+              setInventoryState={setInventoryState}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              isReadOnly={false}
+            />
+            
+            <LineShoppingListTextarea 
+              items={items}
+              checkedItems={checkedItems}
+              inventoryState={inventoryState}
+            />
+          </>
         )}
 
         {/* 買い物終了ボタン */}
