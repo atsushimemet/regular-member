@@ -125,10 +125,10 @@ const RegularItemsList: React.FC<Props> = ({
     });
   };
 
-  // カテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
+  // ベンチメンバーを除外してカテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
   const itemsByCategory = CATEGORIES.map(category => ({
     category,
-    items: items.filter(item => item.categoryId === category.id)
+    items: items.filter(item => item.categoryId === category.id && !isBenchItem(item.name))
   })).filter(group => group.items.length > 0);
 
   if (items.length === 0) {
