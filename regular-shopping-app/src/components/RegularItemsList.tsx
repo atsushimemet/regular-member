@@ -22,13 +22,14 @@ interface InventoryState {
 
 // カンマ区切りの商品を解析する関数
 const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-  // ,new、,tired、,emer、,lowで終わる場合は最後の要素を除外して判定
+  // ,new、,tired、,emer、,low、,benchで終わる場合は最後の要素を除外して判定
   const isNewItem = name.trim().endsWith(',new');
   const isTiredItem = name.trim().endsWith(',tired');
   const isEmerItem = name.trim().endsWith(',emer');
   const isLowItem = name.trim().endsWith(',low');
-  const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem || isLowItem ? 
-    name.trim().replace(/,\s*(new|tired|emer|low)$/, '') : name;
+  const isBenchItem = name.trim().endsWith(',bench');
+  const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem || isLowItem || isBenchItem ? 
+    name.trim().replace(/,\s*(new|tired|emer|low|bench)$/, '') : name;
   
   const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
   
@@ -66,9 +67,14 @@ const isLowItem = (name: string): boolean => {
   return name.trim().endsWith(',low');
 };
 
-// 表示用の商品名を取得する関数（,new、,tired、,emer、,lowを除去）
+// ベンチメンバーかどうかを判定する関数
+const isBenchItem = (name: string): boolean => {
+  return name.trim().endsWith(',bench');
+};
+
+// 表示用の商品名を取得する関数（,new、,tired、,emer、,low、,benchを除去）
 const getDisplayName = (name: string): string => {
-  return name.trim().replace(/,\s*(new|tired|emer|low)$/, '');
+  return name.trim().replace(/,\s*(new|tired|emer|low|bench)$/, '');
 };
 
 const RegularItemsList: React.FC<Props> = ({ 
@@ -119,10 +125,10 @@ const RegularItemsList: React.FC<Props> = ({
     });
   };
 
-  // カテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
+  // ベンチメンバーを除外してカテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
   const itemsByCategory = CATEGORIES.map(category => ({
     category,
-    items: items.filter(item => item.categoryId === category.id)
+    items: items.filter(item => item.categoryId === category.id && !isBenchItem(item.name))
   })).filter(group => group.items.length > 0);
 
   if (items.length === 0) {

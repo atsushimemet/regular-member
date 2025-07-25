@@ -83,6 +83,20 @@ const CommaSeparatedHelp: React.FC = () => {
 
         <div style={{
           padding: '12px',
+          backgroundColor: '#000',
+          borderRadius: '6px',
+          border: '1px solid #333'
+        }}>
+          <strong style={{ color: '#fff' }}>🏆 ベンチメンバー（必ず買うもの）</strong>
+          <p style={{ margin: '5px 0 0 0', color: '#fff' }}>
+            商品名の後に <code style={{ backgroundColor: '#333', padding: '2px 4px', borderRadius: '3px', color: '#fff' }}>,bench</code> を付けると、必ず買うものとして黒い枠で表示されます。
+            <br />
+            <strong>例:</strong> 牛乳,bench
+          </p>
+        </div>
+
+        <div style={{
+          padding: '12px',
           backgroundColor: '#fff3e0',
           borderRadius: '6px',
           border: '1px solid #ffcc02'
@@ -108,6 +122,8 @@ const CommaSeparatedHelp: React.FC = () => {
             <strong>例:</strong> しめじ,きのこ,new（条件付きかつ新規確認）
             <br />
             <strong>例:</strong> カップラーメン,インスタントラーメン,tired（条件付きかつ元気ない時）
+            <br />
+            <strong>例:</strong> 牛乳,bench（必ず買うもの）
           </p>
         </div>
       </div>

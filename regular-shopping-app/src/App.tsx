@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
+import BenchMemberList from './components/BenchMemberList';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
 import LineShoppingListShare from './components/LineShoppingListShare';
 import RakutenCardAffiliate from './components/RakutenCardAffiliate';
@@ -186,6 +187,12 @@ function AppContent() {
                 isReadOnly={false}
               />
               
+              <BenchMemberList 
+                items={items}
+                checkedItems={checkedItems}
+                setCheckedItems={setCheckedItems}
+              />
+
               <LineShoppingListShare 
                 items={items}
                 checkedItems={checkedItems}
@@ -319,6 +326,12 @@ function AppContent() {
               isReadOnly={false}
             />
             
+            <BenchMemberList 
+              items={items}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+            />
+
             <LineShoppingListShare 
               items={items}
               checkedItems={checkedItems}

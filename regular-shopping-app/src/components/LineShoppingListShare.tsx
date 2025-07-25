@@ -8,6 +8,16 @@ interface Props {
 }
 
 const LineShoppingListShare = ({ items, checkedItems, inventoryState }: Props) => {
+  // ベンチメンバーを判定する関数
+  const isBenchItem = (name: string): boolean => {
+    return name.trim().endsWith(',bench');
+  };
+
+  // 表示用の商品名を取得する関数（,new、,tired、,emer、,low、,benchを除去）
+  const getDisplayName = (name: string): string => {
+    return name.trim().replace(/,\s*(new|tired|emer|low|bench)$/, '');
+  };
+
   // 買い物リストのテキストを生成
   const shoppingListText = useMemo(() => {
     const shoppingItems: string[] = [];
@@ -15,11 +25,11 @@ const LineShoppingListShare = ({ items, checkedItems, inventoryState }: Props) =
     items.forEach(item => {
       const isChecked = checkedItems.has(item.id);
       const isUnavailable = inventoryState[item.id] === 'unavailable';
+      const isBenchItemFlag = isBenchItem(item.name);
       
-      // チェックされたアイテムまたは在庫がないアイテムを買い物リストに追加
-      if (isChecked || isUnavailable) {
-        // 商品名から条件付きの部分（,new、,tired、,emer、,low）を除去
-        const displayName = item.name.trim().replace(/,\s*(new|tired|emer|low)$/, '');
+      // ベンチメンバーは必ず買い物リストに追加、またはチェックされたアイテムまたは在庫がないアイテムを買い物リストに追加
+      if (isBenchItemFlag || isChecked || isUnavailable) {
+        const displayName = getDisplayName(item.name);
         shoppingItems.push(displayName);
       }
     });
@@ -63,7 +73,7 @@ const LineShoppingListShare = ({ items, checkedItems, inventoryState }: Props) =
 
   // 買い物リストのアイテム数を計算
   const shoppingItemCount = items.filter(item => 
-    checkedItems.has(item.id) || inventoryState[item.id] === 'unavailable'
+    isBenchItem(item.name) || checkedItems.has(item.id) || inventoryState[item.id] === 'unavailable'
   ).length;
 
   return (
