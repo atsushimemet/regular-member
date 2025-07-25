@@ -22,13 +22,14 @@ interface InventoryState {
 
 // カンマ区切りの商品を解析する関数
 const parseCommaSeparatedItems = (name: string): { items: string[], hasCondition: boolean } => {
-  // ,new、,tired、,emer、,lowで終わる場合は最後の要素を除外して判定
+  // ,new、,tired、,emer、,low、,benchで終わる場合は最後の要素を除外して判定
   const isNewItem = name.trim().endsWith(',new');
   const isTiredItem = name.trim().endsWith(',tired');
   const isEmerItem = name.trim().endsWith(',emer');
   const isLowItem = name.trim().endsWith(',low');
-  const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem || isLowItem ? 
-    name.trim().replace(/,\s*(new|tired|emer|low)$/, '') : name;
+  const isBenchItem = name.trim().endsWith(',bench');
+  const nameWithoutSuffix = isNewItem || isTiredItem || isEmerItem || isLowItem || isBenchItem ? 
+    name.trim().replace(/,\s*(new|tired|emer|low|bench)$/, '') : name;
   
   const items = nameWithoutSuffix.split(',').map(item => item.trim()).filter(item => item.length > 0);
   
@@ -66,9 +67,14 @@ const isLowItem = (name: string): boolean => {
   return name.trim().endsWith(',low');
 };
 
-// 表示用の商品名を取得する関数（,new、,tired、,emer、,lowを除去）
+// ベンチメンバーかどうかを判定する関数
+const isBenchItem = (name: string): boolean => {
+  return name.trim().endsWith(',bench');
+};
+
+// 表示用の商品名を取得する関数（,new、,tired、,emer、,low、,benchを除去）
 const getDisplayName = (name: string): string => {
-  return name.trim().replace(/,\s*(new|tired|emer|low)$/, '');
+  return name.trim().replace(/,\s*(new|tired|emer|low|bench)$/, '');
 };
 
 const RegularItemsList: React.FC<Props> = ({ 
@@ -119,10 +125,14 @@ const RegularItemsList: React.FC<Props> = ({
     });
   };
 
-  // カテゴリごとにアイテムをグループ化し、カテゴリの順序で並べる
+  // ベンチメンバーとレギュラーメンバーを分離
+  const benchItems = items.filter(item => isBenchItem(item.name));
+  const regularItems = items.filter(item => !isBenchItem(item.name));
+
+  // レギュラーメンバーをカテゴリごとにグループ化
   const itemsByCategory = CATEGORIES.map(category => ({
     category,
-    items: items.filter(item => item.categoryId === category.id)
+    items: regularItems.filter(item => item.categoryId === category.id)
   })).filter(group => group.items.length > 0);
 
   if (items.length === 0) {
@@ -136,6 +146,76 @@ const RegularItemsList: React.FC<Props> = ({
 
   return (
     <div>
+      {/* ベンチメンバーセクション */}
+      {benchItems.length > 0 && (
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ 
+            color: '#333', 
+            borderBottom: '3px solid #000', 
+            paddingBottom: '8px',
+            margin: '20px 0 15px 0',
+            fontSize: '18px',
+            fontWeight: 'bold'
+          }}>
+            🏆 ベンチメンバー（必ず買うもの）
+          </h3>
+          <div style={{ display: 'grid', gap: '8px' }}>
+            {benchItems.map(item => {
+              const displayName = getDisplayName(item.name);
+              const isChecked = checkedItems.has(item.id);
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    padding: '12px',
+                    backgroundColor: isChecked ? '#f5f5f5' : '#fff',
+                    border: '2px solid #000',
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    opacity: isChecked ? 0.6 : 1
+                  }}
+                >
+                  {/* チェックボックス */}
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleCheckedItem(item.id)}
+                    style={{
+                      marginRight: '12px',
+                      marginTop: '2px',
+                      transform: 'scale(1.2)'
+                    }}
+                  />
+                  
+                  {/* 商品情報 */}
+                  <div style={{ flex: 1 }}>
+                    <span style={{ 
+                      fontSize: '16px',
+                      textDecoration: isChecked ? 'line-through' : 'none',
+                      fontWeight: '500'
+                    }}>
+                      {displayName}
+                    </span>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: '#000', 
+                      marginTop: '4px',
+                      fontStyle: 'italic'
+                    }}>
+                      🏆 必ず買うもの
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* レギュラーメンバーセクション */}
       {itemsByCategory.map(({ category, items }) => (
         <div key={category.id} style={{ marginBottom: '20px' }}>
           <h4 style={{ 
@@ -269,71 +349,73 @@ const RegularItemsList: React.FC<Props> = ({
                     )}
                   </div>
 
-                  {/* 在庫確認ボタンと削除ボタン */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '10px' }}>
-                    {/* 1行目: 在庫確認ボタン */}
-                    {!isReadOnly && (
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                  {/* 在庫確認ボタンと削除ボタン（ベンチメンバーには表示しない） */}
+                  {!isBenchItem(item.name) && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginLeft: '10px' }}>
+                      {/* 1行目: 在庫確認ボタン */}
+                      {!isReadOnly && (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button
+                            onClick={() => updateInventoryStatus(item.id, 'available')}
+                            style={{
+                              padding: '4px 8px',
+                              fontSize: '11px',
+                              backgroundColor: currentStatus === 'available' ? '#4caf50' : '#e0e0e0',
+                              color: currentStatus === 'available' ? 'white' : '#333',
+                              border: '1px solid #ccc',
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              minWidth: '40px'
+                            }}
+                          >
+                            ある
+                          </button>
+                          <button
+                            onClick={() => updateInventoryStatus(item.id, 'unavailable')}
+                            style={{
+                              padding: '4px 8px',
+                              fontSize: '11px',
+                              backgroundColor: currentStatus === 'unavailable' ? '#f44336' : '#e0e0e0',
+                              color: currentStatus === 'unavailable' ? 'white' : '#333',
+                              border: '1px solid #ccc',
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                              minWidth: '40px'
+                            }}
+                          >
+                            ない
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* 2行目: 削除ボタン */}
+                      {!isReadOnly && (
                         <button
-                          onClick={() => updateInventoryStatus(item.id, 'available')}
+                          onClick={() => {
+                            const category = CATEGORIES.find(cat => cat.id === item.categoryId);
+                            const categoryName = category?.name || 'その他';
+                            const displayName = getDisplayName(item.name);
+                            
+                            // GA4イベントを送信
+                            trackItemDeleted(categoryName, displayName);
+                            
+                            onDeleteItem(item.id);
+                          }}
                           style={{
                             padding: '4px 8px',
                             fontSize: '11px',
-                            backgroundColor: currentStatus === 'available' ? '#4caf50' : '#e0e0e0',
-                            color: currentStatus === 'available' ? 'white' : '#333',
-                            border: '1px solid #ccc',
+                            backgroundColor: '#ff6b6b',
+                            color: 'white',
+                            border: 'none',
                             borderRadius: '3px',
-                            cursor: 'pointer',
-                            minWidth: '40px'
+                            cursor: 'pointer'
                           }}
                         >
-                          ある
+                          削除
                         </button>
-                        <button
-                          onClick={() => updateInventoryStatus(item.id, 'unavailable')}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '11px',
-                            backgroundColor: currentStatus === 'unavailable' ? '#f44336' : '#e0e0e0',
-                            color: currentStatus === 'unavailable' ? 'white' : '#333',
-                            border: '1px solid #ccc',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            minWidth: '40px'
-                          }}
-                        >
-                          ない
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* 2行目: 削除ボタン */}
-                    {!isReadOnly && (
-                      <button
-                        onClick={() => {
-                          const category = CATEGORIES.find(cat => cat.id === item.categoryId);
-                          const categoryName = category?.name || 'その他';
-                          const displayName = getDisplayName(item.name);
-                          
-                          // GA4イベントを送信
-                          trackItemDeleted(categoryName, displayName);
-                          
-                          onDeleteItem(item.id);
-                        }}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '11px',
-                          backgroundColor: '#ff6b6b',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '3px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        削除
-                      </button>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
