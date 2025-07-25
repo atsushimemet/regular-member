@@ -3,6 +3,7 @@ import './App.css';
 import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
+import LineShoppingListShare from './components/LineShoppingListShare';
 import RakutenCardAffiliate from './components/RakutenCardAffiliate';
 import RegularItemsList from './components/RegularItemsList';
 import ShareUrl from './components/ShareUrl';
@@ -174,15 +175,23 @@ function AppContent() {
               データを読み込み中...
             </div>
           ) : (
-            <RegularItemsList 
-              items={items} 
-              onDeleteItem={() => {}} // 共有ビューでは削除不可
-              inventoryState={inventoryState}
-              setInventoryState={setInventoryState}
-              checkedItems={checkedItems}
-              setCheckedItems={setCheckedItems}
-              isReadOnly={false}
-            />
+            <>
+              <RegularItemsList 
+                items={items} 
+                onDeleteItem={() => {}} // 共有ビューでは削除不可
+                inventoryState={inventoryState}
+                setInventoryState={setInventoryState}
+                checkedItems={checkedItems}
+                setCheckedItems={setCheckedItems}
+                isReadOnly={false}
+              />
+              
+              <LineShoppingListShare 
+                items={items}
+                checkedItems={checkedItems}
+                inventoryState={inventoryState}
+              />
+            </>
           )}
 
           {/* 買い物終了ボタン */}
@@ -299,15 +308,23 @@ function AppContent() {
             データを読み込み中...
           </div>
         ) : (
-          <RegularItemsList 
-            items={items} 
-            onDeleteItem={handleDeleteItem}
-            inventoryState={inventoryState}
-            setInventoryState={setInventoryState}
-            checkedItems={checkedItems}
-            setCheckedItems={setCheckedItems}
-            isReadOnly={false}
-          />
+          <>
+            <RegularItemsList 
+              items={items} 
+              onDeleteItem={handleDeleteItem}
+              inventoryState={inventoryState}
+              setInventoryState={setInventoryState}
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              isReadOnly={false}
+            />
+            
+            <LineShoppingListShare 
+              items={items}
+              checkedItems={checkedItems}
+              inventoryState={inventoryState}
+            />
+          </>
         )}
 
         {/* 買い物終了ボタン */}
