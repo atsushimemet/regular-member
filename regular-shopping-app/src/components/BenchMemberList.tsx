@@ -1,13 +1,16 @@
 import React from 'react';
 import { RegularItem } from '../types';
+import { trackItemDeleted } from '../utils/ga4';
 
 interface Props {
   items: RegularItem[];
   checkedItems: Set<string>;
   setCheckedItems: React.Dispatch<React.SetStateAction<Set<string>>>;
+  onDeleteItem: (id: string) => void;
+  isReadOnly?: boolean;
 }
 
-const BenchMemberList: React.FC<Props> = ({ items, checkedItems, setCheckedItems }) => {
+const BenchMemberList: React.FC<Props> = ({ items, checkedItems, setCheckedItems, onDeleteItem, isReadOnly }) => {
   // ベンチメンバーを判定する関数
   const isBenchItem = (name: string): boolean => {
     return name.trim().endsWith(',bench');
@@ -23,13 +26,12 @@ const BenchMemberList: React.FC<Props> = ({ items, checkedItems, setCheckedItems
 
   // チェックボックスの状態を更新する関数
   const toggleCheckedItem = (itemId: string) => {
-    const item = items.find(i => i.id === itemId);
-    if (item) {
-      const displayName = getDisplayName(item.name);
-      
-      // GA4イベントを送信（必要に応じて）
-      // trackItemChecked('ベンチメンバー', displayName);
-    }
+    // GA4イベントを送信（必要に応じて）
+    // const item = items.find(i => i.id === itemId);
+    // if (item) {
+    //   const displayName = getDisplayName(item.name);
+    //   trackItemChecked('ベンチメンバー', displayName);
+    // }
     
     setCheckedItems((prev) => {
       const newSet = new Set(prev);
@@ -108,6 +110,33 @@ const BenchMemberList: React.FC<Props> = ({ items, checkedItems, setCheckedItems
                   🏆 必ず買うもの
                 </div>
               </div>
+
+              {/* 削除ボタン */}
+              {!isReadOnly && (
+                <div style={{ marginLeft: '10px' }}>
+                  <button
+                    onClick={() => {
+                      const displayName = getDisplayName(item.name);
+                      
+                      // GA4イベントを送信
+                      trackItemDeleted('ベンチメンバー', displayName);
+                      
+                      onDeleteItem(item.id);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '11px',
+                      backgroundColor: '#ff6b6b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
