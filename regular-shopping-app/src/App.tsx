@@ -4,6 +4,7 @@ import AddItemForm from './components/AddItemForm';
 import AuthForm from './components/AuthForm';
 import BenchMemberList from './components/BenchMemberList';
 import CommaSeparatedHelp from './components/CommaSeparatedHelp';
+import LandingPage from './components/LandingPage';
 import LineShoppingListShare from './components/LineShoppingListShare';
 import RakutenCardAffiliate from './components/RakutenCardAffiliate';
 import RegularItemsList from './components/RegularItemsList';
@@ -22,6 +23,7 @@ function AppContent() {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [isSharedView, setIsSharedView] = useState(false);
   const [sharedCoupleId, setSharedCoupleId] = useState<string | null>(null);
+  const [showLandingPage, setShowLandingPage] = useState(true);
   
   const { couple, isLoading: authLoading } = useAuth();
 
@@ -36,6 +38,7 @@ function AppContent() {
     if (shareId && isValidShareId(shareId)) {
       // 共有IDが有効な場合、共有ビューとして表示
       setIsSharedView(true);
+      setShowLandingPage(false); // 共有ビューではランディングページを表示しない
       // 共有IDから夫婦IDを取得するロジック（後で実装）
       // 現在は仮の実装として、共有IDの最初の8文字を夫婦IDとして使用
       setSharedCoupleId(shareId.substring(0, 8));
@@ -43,6 +46,13 @@ function AppContent() {
       fetchSharedItems(shareId);
     }
   }, []);
+
+  // 認証状態が変化したらランディングページの表示を制御
+  useEffect(() => {
+    if (couple || isSharedView) {
+      setShowLandingPage(false);
+    }
+  }, [couple, isSharedView]);
 
   // 共有ビュー用のデータ取得
   const fetchSharedItems = async (shareId: string) => {
@@ -244,8 +254,13 @@ function AppContent() {
     );
   }
 
+  // ランディングページを表示
+  if (showLandingPage && !couple && !isSharedView) {
+    return <LandingPage onGetStarted={() => setShowLandingPage(false)} />;
+  }
+
   // 未認証の場合はログインフォームを表示
-  if (!couple) {
+  if (!couple && !isSharedView) {
     return <AuthForm />;
   }
 
