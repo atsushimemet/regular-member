@@ -191,6 +191,8 @@ function AppContent() {
                 items={items}
                 checkedItems={checkedItems}
                 setCheckedItems={setCheckedItems}
+                onDeleteItem={() => {}}
+                isReadOnly={true}
               />
 
               <LineShoppingListShare 
@@ -330,6 +332,8 @@ function AppContent() {
               items={items}
               checkedItems={checkedItems}
               setCheckedItems={setCheckedItems}
+              onDeleteItem={handleDeleteItem}
+              isReadOnly={false}
             />
 
             <LineShoppingListShare 
