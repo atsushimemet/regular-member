@@ -29,6 +29,21 @@ async function setupDatabase() {
       )
     `);
 
+    // 前回購入日テーブル（予測機能用）
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS last_purchases (
+        id SERIAL PRIMARY KEY,
+        couple_id VARCHAR(255) NOT NULL,
+        item_id VARCHAR(255) NOT NULL,
+        last_purchased_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(couple_id, item_id),
+        FOREIGN KEY (couple_id) REFERENCES couples(couple_id) ON DELETE CASCADE,
+        FOREIGN KEY (item_id) REFERENCES regular_items(item_id) ON DELETE CASCADE
+      )
+    `);
+
     // インデックスの作成
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_regular_items_couple_id ON regular_items(couple_id)
@@ -36,6 +51,19 @@ async function setupDatabase() {
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_regular_items_category_id ON regular_items(category_id)
+    `);
+
+    // 前回購入日テーブルのインデックス
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_last_purchases_couple_id ON last_purchases(couple_id)
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_last_purchases_item_id ON last_purchases(item_id)
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_last_purchases_purchased_at ON last_purchases(last_purchased_at)
     `);
 
     console.log('Database setup completed successfully!');

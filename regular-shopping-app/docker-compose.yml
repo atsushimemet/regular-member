@@ -31,6 +31,10 @@ services:
       DB_PASSWORD: password
       JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
       FRONTEND_URL: http://localhost:3000
+      # predictions feature flags
+      PREDICTOR_URL: http://predictor:5000
+      PREDICTIONS_ENABLED: "false"
+      PREDICTIONS_COUPLE_ALLOWLIST: ""
     ports:
       - "3001:3001"
     depends_on:
@@ -52,6 +56,8 @@ services:
     environment:
       REACT_APP_API_URL: http://localhost:3001/api
       CHOKIDAR_USEPOLLING: "true"
+      # predictions feature flag for UI
+      REACT_APP_SHOW_PREDICTIONS: "false"
     depends_on:
       - api
     stdin_open: true
@@ -66,6 +72,8 @@ services:
       - "8080:80"
     environment:
       REACT_APP_API_URL: http://localhost:3001/api
+      # predictions feature flag for UI
+      REACT_APP_SHOW_PREDICTIONS: "false"
     depends_on:
       - api
     profiles:
