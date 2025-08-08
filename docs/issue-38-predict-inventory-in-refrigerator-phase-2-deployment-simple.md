@@ -191,10 +191,69 @@ curl -X POST https://regular-member-full.onrender.com/api/predictions/predict \
 
 #### 6.1 既存機能の動作確認
 ```bash
-# 既存のAPIエンドポイントの確認
-curl https://regular-member-full.onrender.com/api/items
+# 1. 夫婦登録でトークンを取得
+curl -X POST https://regular-member-full.onrender.com/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "coupleId": "test_couple_deployment",
+    "coupleName": "デプロイテスト夫婦",
+    "password": "testpassword123"
+  }'
 
-# 期待結果: 既存機能が正常に動作している
+# 期待結果:
+# {
+#   "message": "Couple registered successfully",
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#   "couple": {
+#     "coupleId": "test_couple_deployment",
+#     "coupleName": "デプロイテスト夫婦"
+#   }
+# }
+
+# 2. 取得したトークンでアイテム一覧を取得
+curl -X GET https://regular-member-full.onrender.com/api/items \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# 期待結果: 認証されたユーザーのアイテム一覧が返される
+# {
+#   "items": []
+# }
+
+# 3. アイテムを追加してテスト
+curl -X POST https://regular-member-full.onrender.com/api/items \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d '{
+    "name": "牛乳",
+    "categoryId": "dairy"
+  }'
+
+# 期待結果:
+# {
+#   "message": "Item added successfully",
+#   "item": {
+#     "id": "...",
+#     "name": "牛乳",
+#     "categoryId": "dairy",
+#     "createdAt": "..."
+#   }
+# }
+
+# 4. 追加したアイテムを確認
+curl -X GET https://regular-member-full.onrender.com/api/items \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# 期待結果: 追加したアイテムが表示される
+# {
+#   "items": [
+#     {
+#       "id": "...",
+#       "name": "牛乳",
+#       "categoryId": "dairy",
+#       "createdAt": "..."
+#     }
+#   ]
+# }
 ```
 
 #### 6.2 全サービスの動作確認
@@ -205,8 +264,63 @@ curl https://regular-member.onrender.com
 # バックエンドAPIの確認
 curl https://regular-member-full.onrender.com/api/health
 
+# 認証サービスの確認
+curl https://regular-member-full.onrender.com/api/auth/health
+
 # 期待結果: すべてのサービスが正常に動作している
+
+#### 6.3 認証機能の詳細テスト
+```bash
+# 1. 認証サービスのヘルスチェック
+curl https://regular-member-full.onrender.com/api/auth/health
+
+# 期待結果:
+# {
+#   "status": "OK",
+#   "message": "Auth service is running",
+#   "endpoints": {
+#     "register": "POST /api/auth/register",
+#     "login": "POST /api/auth/login",
+#     "verify": "GET /api/auth/verify"
+#   }
+# }
+
+# 2. 夫婦ログインのテスト
+curl -X POST https://regular-member-full.onrender.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "coupleId": "test_couple_deployment",
+    "password": "testpassword123"
+  }'
+
+# 期待結果:
+# {
+#   "message": "Login successful",
+#   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#   "couple": {
+#     "coupleId": "test_couple_deployment",
+#     "coupleName": "デプロイテスト夫婦"
+#   }
+# }
+
+# 3. トークン検証のテスト
+curl -X GET https://regular-member-full.onrender.com/api/auth/verify \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# 期待結果:
+# {
+#   "valid": true,
+#   "couple": {
+#     "coupleId": "test_couple_deployment",
+#     "coupleName": "デプロイテスト夫婦"
+#   }
+# }
 ```
+
+### 注意事項
+- **トークンの置き換え**: `YOUR_TOKEN_HERE`を実際に取得したトークンに置き換えてください
+- **テストデータの管理**: デプロイテスト用のデータは本番環境では適切に管理してください
+- **セキュリティ**: テスト用のパスワードは本番環境では強力なものに変更してください
 
 ## ロールバック手順
 
