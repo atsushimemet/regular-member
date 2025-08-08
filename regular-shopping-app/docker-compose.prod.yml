@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # バックエンドAPI
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: ${DB_HOST}
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      PREDICTOR_URL: http://predictor:5000
+      PREDICTIONS_ENABLED: ${PREDICTIONS_ENABLED}
+      PREDICTIONS_COUPLE_ALLOWLIST: ${PREDICTIONS_COUPLE_ALLOWLIST}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - predictor
+
+  # Flask予測サービス
+  predictor:
+    build:
+      context: ./predictor
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./predictor:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s 

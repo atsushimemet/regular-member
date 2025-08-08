@@ -1,6 +1,7 @@
 services:
+  # フロントエンド（静的サイト）
   - type: web
-    name: regular-shopping-app
+    name: regular-member
     env: static
     buildCommand: cd regular-shopping-app && npm install && npm run build
     staticPublishPath: ./regular-shopping-app/build
@@ -8,3 +9,45 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+  # バックエンドAPI
+  - type: web
+    name: regular-member-full
+    env: node
+    buildCommand: cd regular-shopping-app/server && npm install
+    startCommand: cd regular-shopping-app/server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        value: https://regular-member.onrender.com
+      - key: PREDICTOR_URL
+        value: https://regular-member-predictor.onrender.com
+      - key: PREDICTIONS_ENABLED
+        value: false
+      - key: PREDICTIONS_COUPLE_ALLOWLIST
+        value: ""
+
+  # Flask予測サービス
+  - type: web
+    name: regular-member-predictor
+    env: python
+    buildCommand: cd regular-shopping-app/predictor && pip install -r requirements.txt
+    startCommand: cd regular-shopping-app/predictor && python app.py
+    envVars:
+      - key: PORT
+        value: 5000

@@ -33,7 +33,7 @@ services:
       FRONTEND_URL: http://localhost:3000
       # predictions feature flags
       PREDICTOR_URL: http://predictor:5000
-      PREDICTIONS_ENABLED: "false"
+      PREDICTIONS_ENABLED: "true"
       PREDICTIONS_COUPLE_ALLOWLIST: ""
     ports:
       - "3001:3001"
@@ -78,6 +78,18 @@ services:
       - api
     profiles:
       - production
+
+  # Flask 予測サービス
+  predictor:
+    build:
+      context: ./predictor
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    environment:
+      PORT: 5000
+    volumes:
+      - ./predictor:/app
 
 volumes:
   postgres_data:

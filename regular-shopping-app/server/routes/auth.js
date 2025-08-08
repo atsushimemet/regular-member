@@ -4,6 +4,19 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const router = express.Router();
 
+// 認証サービスヘルスチェック
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Auth service is running',
+    endpoints: {
+      register: 'POST /api/auth/register',
+      login: 'POST /api/auth/login',
+      verify: 'GET /api/auth/verify'
+    }
+  });
+});
+
 // 夫婦登録
 router.post('/register', async (req, res) => {
   try {
