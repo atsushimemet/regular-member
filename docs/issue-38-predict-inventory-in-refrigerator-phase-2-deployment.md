@@ -7,17 +7,17 @@
 ### デプロイ対象
 - **フェーズ2**: Flask予測サービスの導入
 - **新規サービス**: `predictor`（Flask + 確率マトリックス）
-- **Docker統合**: 本番環境でのFlaskサービス追加
+- **Render統合**: 既存のRenderプロジェクトへの新規サービス追加
 
 ### デプロイ方針
-- **内部ネットワーク限定**: 外部からのアクセス不可
+- **Render統合**: 既存の`regular-member`プロジェクトに統合
 - **段階的導入**: 既存サービスに影響を与えない
 - **ロールバック可能**: 問題発生時は即座に無効化
 - **監視強化**: ログとメトリクスの追加
 
 ### 技術的変更点
 - 新しいFlaskサービスの追加
-- Docker Compose設定の拡張
+- `render.yaml`設定の拡張
 - 確率マトリックスファイルの配置
 - サービス間通信の設定
 
@@ -25,7 +25,7 @@
 
 ### 必要な権限
 - Renderプロジェクトの管理権限
-- Docker環境の管理権限
+- Supabaseプロジェクトの管理権限
 - GitHubリポジトリのプッシュ権限
 
 ### 確認済み事項
@@ -40,6 +40,11 @@
 - [ ] `last_purchases`テーブルが存在している
 - [ ] 環境変数が正しく設定されている
 
+### 現在のRender構成
+- **フロントエンド**: `regular-member`（静的サイト）
+- **バックエンドAPI**: `regular-member-full`（Node.js）
+- **新規追加**: `regular-member-predictor`（Flask）
+
 ## デプロイ手順
 
 ### ステップ1: コードの準備
@@ -53,8 +58,8 @@ git branch
 # 最新のコミットを確認
 git log --oneline -3
 # 期待結果:
+# 90642c9 docs: Update Phase 2 deployment strategy for Railway
 # a57e93a docs: Add comprehensive introduction for Zenn publication
-# 00ca3a7 docs: Fix service communication test command
 # [previous commits...]
 ```
 
@@ -68,66 +73,65 @@ git push origin feature/issue-38-phase-2-flask-predictor
 # 説明: フェーズ2の変更内容を記載
 ```
 
-### ステップ2: 本番環境でのデプロイ設定
+### ステップ2: Render設定の更新
 
-#### 2.1 Railwayでの統合デプロイ設定
-本番環境ではRailwayを使用して統合デプロイを行います：
-
-```bash
-# Railway CLIのインストール
-npm install -g @railway/cli
-
-# プロジェクトの初期化
-railway login
-railway init
-```
-
-#### 2.2 本番用Docker Compose設定の作成
-`docker-compose.prod.yml`を作成：
+#### 2.1 render.yamlの更新
+`render.yaml`にFlask予測サービスを追加：
 
 ```yaml
-version: '3.8'
-
 services:
+  # フロントエンド（静的サイト）
+  - type: web
+    name: regular-member-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
   # バックエンドAPI
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-      DB_HOST: ${DB_HOST}
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      PREDICTOR_URL: http://predictor:5000
-      PREDICTIONS_ENABLED: ${PREDICTIONS_ENABLED}
-      PREDICTIONS_COUPLE_ALLOWLIST: ${PREDICTIONS_COUPLE_ALLOWLIST}
-    ports:
-      - "3001:3001"
-    depends_on:
-      - predictor
+  - type: web
+    name: regular-member-full
+    env: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        value: https://regular-member.onrender.com
+      - key: PREDICTOR_URL
+        value: https://regular-member-predictor.onrender.com
+      - key: PREDICTIONS_ENABLED
+        value: false
+      - key: PREDICTIONS_COUPLE_ALLOWLIST
+        value: ""
 
   # Flask予測サービス
-  predictor:
-    build:
-      context: ./predictor
-      dockerfile: Dockerfile
-    environment:
-      PORT: 5000
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./predictor:/app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+  - type: web
+    name: regular-member-predictor
+    env: python
+    buildCommand: pip install -r predictor/requirements.txt
+    startCommand: cd predictor && python app.py
+    envVars:
+      - key: PORT
+        value: 5000
 ```
 
 ### ステップ3: Flaskサービスのファイル配置
@@ -142,7 +146,11 @@ regular-shopping-app/
 │   ├── app.py
 │   ├── probability_matrix.json
 │   └── probability_matrix.json.backup
-└── docker-compose.yml
+├── server/
+│   └── [既存のNode.jsファイル]
+├── src/
+│   └── [既存のReactファイル]
+└── render.yaml
 ```
 
 #### 3.2 確率マトリックスファイルの配置
@@ -153,57 +161,52 @@ cat regular-shopping-app/predictor/probability_matrix.json
 # 期待結果: 各カテゴリの確率データが含まれている
 ```
 
-### ステップ4: Railwayでの本番デプロイ
+### ステップ4: Renderでのデプロイ
 
-#### 4.1 環境変数の設定
-Railwayダッシュボードで環境変数を設定：
+#### 4.1 GitHubとの連携確認
+1. Renderダッシュボードでプロジェクトを開く
+2. 「Settings」タブでGitHubリポジトリとの連携を確認
+3. 自動デプロイが有効になっていることを確認
 
+#### 4.2 環境変数の設定
+Renderダッシュボードで各サービスに環境変数を設定：
+
+**バックエンドAPI（regular-member-full）**:
+- `NODE_ENV`: production
+- `PORT`: 3001
+- `DB_HOST`: Supabaseのホスト
+- `DB_NAME`: データベース名
+- `DB_USER`: ユーザー名
+- `DB_PASSWORD`: パスワード
+- `JWT_SECRET`: 秘密鍵
+- `FRONTEND_URL`: https://regular-member.onrender.com
+- `PREDICTOR_URL`: https://regular-member-predictor.onrender.com
+- `PREDICTIONS_ENABLED`: false
+- `PREDICTIONS_COUPLE_ALLOWLIST`: ""
+
+**Flask予測サービス（regular-member-predictor）**:
+- `PORT`: 5000
+
+#### 4.3 デプロイの実行
 ```bash
-# Railway CLIで環境変数を設定
-railway variables set DB_HOST=your-supabase-host
-railway variables set DB_NAME=your-database-name
-railway variables set DB_USER=your-username
-railway variables set DB_PASSWORD=your-password
-railway variables set JWT_SECRET=your-jwt-secret
-railway variables set PREDICTIONS_ENABLED=false
-railway variables set PREDICTIONS_COUPLE_ALLOWLIST=""
+# GitHubにプッシュすると自動デプロイが開始される
+git push origin feature/issue-38-phase-2-flask-predictor
+
+# または、Renderダッシュボードで手動デプロイ
 ```
 
-#### 4.2 Railwayでのデプロイ
-```bash
-# Railwayにデプロイ
-railway up
-
-# デプロイ状況の確認
-railway status
-```
-
-#### 4.3 デプロイ後の確認
-```bash
-# ログの確認
-railway logs
-
-# サービスの状態確認
-railway status
-```
-
-### ステップ5: Railwayでの動作確認
+### ステップ5: Renderでの動作確認
 
 #### 5.1 サービス起動確認
 ```bash
-# Railwayログの確認
-railway logs
-
+# Renderダッシュボードでログを確認
 # 期待結果: エラーがなく、Flaskアプリケーションが起動している
 ```
 
 #### 5.2 ヘルスチェック
 ```bash
-# RailwayのURLを取得
-railway domain
-
 # ヘルスチェックエンドポイントの確認
-curl https://your-railway-app.railway.app/health
+curl https://regular-member-predictor.onrender.com/health
 
 # 期待結果:
 # {
@@ -216,7 +219,7 @@ curl https://your-railway-app.railway.app/health
 #### 5.3 予測エンドポイントの確認
 ```bash
 # 予測エンドポイントのテスト
-curl -X POST https://your-railway-app.railway.app/predict \
+curl -X POST https://regular-member-predictor.onrender.com/predict \
   -H "Content-Type: application/json" \
   -d '{
     "items": [
@@ -239,20 +242,26 @@ curl -X POST https://your-railway-app.railway.app/predict \
 # }
 ```
 
-### ステップ6: Railwayでの統合テスト
+### ステップ6: Renderでの統合テスト
 
 #### 6.1 サービス間通信の確認
 ```bash
-# RailwayのAPIエンドポイントで通信確認
-curl https://your-railway-app.railway.app/api/health
+# バックエンドAPIのヘルスチェック
+curl https://regular-member-full.onrender.com/api/health
 
 # 期待結果: 正常に通信できる
 ```
 
 #### 6.2 全サービスの動作確認
 ```bash
-# Railwayサービスの状態確認
-railway status
+# フロントエンドの確認
+curl https://regular-member.onrender.com
+
+# バックエンドAPIの確認
+curl https://regular-member-full.onrender.com/api/health
+
+# Flask予測サービスの確認
+curl https://regular-member-predictor.onrender.com/health
 
 # 期待結果: すべてのサービスが正常に動作している
 ```
@@ -262,25 +271,22 @@ railway status
 ### 緊急時ロールバック
 問題が発生した場合の緊急ロールバック手順：
 
-#### 1. Railwayでのサービスの停止
+#### 1. Renderでのサービスの停止
 ```bash
-# Railwayでのサービスの停止
-railway service stop predictor
-
-# 他のサービスは継続
-railway service start api
+# Renderダッシュボードでregular-member-predictorサービスを停止
+# または、環境変数を無効化
 ```
 
 #### 2. 環境変数の無効化
 ```bash
-# 予測機能を無効化
-railway variables set PREDICTIONS_ENABLED=false
+# Renderダッシュボードで予測機能を無効化
+PREDICTIONS_ENABLED=false
 ```
 
 #### 3. 動作確認
 ```bash
 # 既存機能の動作確認
-curl https://your-railway-app.railway.app/api/health
+curl https://regular-member-full.onrender.com/api/health
 
 # 期待結果: 既存機能が正常に動作している
 ```
@@ -302,20 +308,17 @@ curl https://your-railway-app.railway.app/api/health
 
 ### ログの確認方法
 ```bash
-# Railwayでのログ確認
-railway logs
+# Renderダッシュボードでログを確認
+# 各サービスの「Logs」タブを確認
 
 # リアルタイムログ監視
-railway logs --follow
-
-# 特定のサービスのログ
-railway logs --service predictor
+# Renderダッシュボードで「Live Logs」を有効化
 ```
 
 ### メトリクスの確認
 ```bash
 # メトリクスエンドポイントの確認
-curl http://localhost:5001/metrics
+curl https://regular-member-predictor.onrender.com/metrics
 
 # 期待結果: 予測呼び出し数やカテゴリ分布が表示される
 ```
@@ -323,7 +326,7 @@ curl http://localhost:5001/metrics
 ### パフォーマンス監視
 ```bash
 # レスポンス時間の確認
-time curl -X POST https://your-railway-app.railway.app/predict \
+time curl -X POST https://regular-member-predictor.onrender.com/predict \
   -H "Content-Type: application/json" \
   -d '{"items": [{"categoryId": "dairy", "daysSinceLastPurchase": 3}]}'
 
@@ -335,15 +338,13 @@ time curl -X POST https://your-railway-app.railway.app/predict \
 ### よくある問題と解決方法
 
 #### 1. サービスが起動しない
-**症状**: Railwayで`predictor`サービスが起動しない
-**原因**: Dockerfileの設定ミス、依存関係の問題
+**症状**: `regular-member-predictor`サービスが起動しない
+**原因**: requirements.txtの依存関係の問題、Python環境の問題
 **解決方法**:
 ```bash
-# ログの確認
-railway logs --service predictor
-
-# Railwayでの再デプロイ
-railway up
+# Renderダッシュボードでログを確認
+# requirements.txtの依存関係を確認
+# Python環境の設定を確認
 ```
 
 #### 2. 確率マトリックスファイルが見つからない
@@ -351,35 +352,30 @@ railway up
 **原因**: ファイルの配置ミス、権限の問題
 **解決方法**:
 ```bash
-# Railwayでのファイル確認
-railway run ls -la /app/
+# ファイルの存在確認
+ls -la regular-shopping-app/predictor/
 
 # ファイルの再配置
-railway run cp /app/probability_matrix.json.backup /app/probability_matrix.json
+cp regular-shopping-app/predictor/probability_matrix.json.backup regular-shopping-app/predictor/probability_matrix.json
 ```
 
 #### 3. サービス間通信エラー
-**症状**: `api`サービスから`predictor`サービスにアクセスできない
-**原因**: Railwayのネットワーク設定の問題
+**症状**: `regular-member-full`から`regular-member-predictor`にアクセスできない
+**原因**: URL設定の問題、ネットワーク設定の問題
 **解決方法**:
 ```bash
-# Railwayでのサービス状態確認
-railway status
-
-# Railwayでの再デプロイ
-railway up
+# 環境変数の確認
+# PREDICTOR_URLが正しく設定されているか確認
+# Renderダッシュボードでサービス間の通信を確認
 ```
 
 #### 4. 環境変数の問題
 **症状**: 環境変数が正しく設定されていない
-**原因**: Railwayでの環境変数設定ミス
+**原因**: Renderでの環境変数設定ミス
 **解決方法**:
 ```bash
-# 環境変数の確認
-railway variables
-
-# 環境変数の再設定
-railway variables set PREDICTIONS_ENABLED=false
+# Renderダッシュボードで環境変数を確認
+# 各サービスに必要な環境変数が設定されているか確認
 ```
 
 ## 成功基準
@@ -417,7 +413,7 @@ railway variables set PREDICTIONS_ENABLED=false
 - [Issue #38](https://github.com/atsushimemet/regular-member/issues/38)
 - [フェーズ0-1のデプロイ手順](./issue-38-predict-inventory-in-refrigerator-deployment.md)
 - [フェーズ2のテスト計画](./issue-38-predict-inventory-in-refrigerator-phase-2-test.md)
-- [Docker Compose設定](../regular-shopping-app/docker-compose.yml)
+- [Render設定](../regular-shopping-app/render.yaml)
 - [Flask予測サービス](../regular-shopping-app/predictor/)
 
 ---
@@ -433,10 +429,10 @@ railway variables set PREDICTIONS_ENABLED=false
 ### デプロイ実行
 - [ ] ブランチの確認
 - [ ] リモートへのプッシュ
-- [ ] Docker Compose設定の更新
+- [ ] render.yaml設定の更新
 - [ ] Flaskサービスのファイル配置
-- [ ] サービスのビルド
-- [ ] 全サービスの起動
+- [ ] Renderでの環境変数設定
+- [ ] 自動デプロイの確認
 
 ### 動作確認
 - [ ] サービス起動確認
