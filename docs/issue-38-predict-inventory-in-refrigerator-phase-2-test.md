@@ -284,9 +284,8 @@ docker compose -f regular-shopping-app/docker-compose.yml logs predictor
 **テスト項目**: `api`サービスから`predictor`サービスへの通信
 **テスト方法**:
 ```bash
-# apiサービスからpredictorサービスへのテスト
+# apiサービスからpredictorサービスへのテスト（Node.js 18の組み込みfetch使用）
 docker compose -f regular-shopping-app/docker-compose.yml exec api node -e "
-const fetch = require('node-fetch');
 fetch('http://predictor:5000/health')
   .then(res => res.json())
   .then(data => console.log('Health check:', data))
