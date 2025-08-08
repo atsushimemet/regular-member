@@ -1,7 +1,7 @@
 services:
   # フロントエンド（静的サイト）
   - type: web
-    name: regular-member-frontend
+    name: regular-member
     env: static
     buildCommand: npm install && npm run build
     staticPublishPath: ./build

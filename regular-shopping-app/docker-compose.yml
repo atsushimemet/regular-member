@@ -33,7 +33,7 @@ services:
       FRONTEND_URL: http://localhost:3000
       # predictions feature flags
       PREDICTOR_URL: http://predictor:5000
-      PREDICTIONS_ENABLED: "false"
+      PREDICTIONS_ENABLED: "true"
       PREDICTIONS_COUPLE_ALLOWLIST: ""
     ports:
       - "3001:3001"
@@ -90,12 +90,6 @@ services:
       PORT: 5000
     volumes:
       - ./predictor:/app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 volumes:
   postgres_data:
