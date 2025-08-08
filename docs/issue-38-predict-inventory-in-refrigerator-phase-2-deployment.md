@@ -68,38 +68,66 @@ git push origin feature/issue-38-phase-2-flask-predictor
 # 説明: フェーズ2の変更内容を記載
 ```
 
-### ステップ2: 本番環境でのDocker設定
+### ステップ2: 本番環境でのデプロイ設定
 
-#### 2.1 Docker Compose設定の更新
-本番環境の`docker-compose.yml`に以下の設定を追加：
+#### 2.1 Railwayでの統合デプロイ設定
+本番環境ではRailwayを使用して統合デプロイを行います：
 
-```yaml
-# Flask 予測サービス
-predictor:
-  build:
-    context: ./predictor
-    dockerfile: Dockerfile
-  ports:
-    - "5001:5000"  # 本番環境では内部ポートのみ
-  environment:
-    PORT: 5000
-  volumes:
-    - ./predictor:/app
-  healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-    interval: 30s
-    timeout: 10s
-    retries: 3
-    start_period: 40s
-  networks:
-    - app-network
+```bash
+# Railway CLIのインストール
+npm install -g @railway/cli
+
+# プロジェクトの初期化
+railway login
+railway init
 ```
 
-#### 2.2 ネットワーク設定の確認
+#### 2.2 本番用Docker Compose設定の作成
+`docker-compose.prod.yml`を作成：
+
 ```yaml
-networks:
-  app-network:
-    driver: bridge
+version: '3.8'
+
+services:
+  # バックエンドAPI
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_HOST: ${DB_HOST}
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      PREDICTOR_URL: http://predictor:5000
+      PREDICTIONS_ENABLED: ${PREDICTIONS_ENABLED}
+      PREDICTIONS_COUPLE_ALLOWLIST: ${PREDICTIONS_COUPLE_ALLOWLIST}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - predictor
+
+  # Flask予測サービス
+  predictor:
+    build:
+      context: ./predictor
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./predictor:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 ```
 
 ### ステップ3: Flaskサービスのファイル配置
@@ -125,50 +153,57 @@ cat regular-shopping-app/predictor/probability_matrix.json
 # 期待結果: 各カテゴリの確率データが含まれている
 ```
 
-### ステップ4: 本番環境でのデプロイ
+### ステップ4: Railwayでの本番デプロイ
 
-#### 4.1 サービスの停止
+#### 4.1 環境変数の設定
+Railwayダッシュボードで環境変数を設定：
+
 ```bash
-# 既存サービスの停止
-docker compose -f regular-shopping-app/docker-compose.yml down
-
-# 確認
-docker compose -f regular-shopping-app/docker-compose.yml ps
-# 期待結果: すべてのサービスが停止している
+# Railway CLIで環境変数を設定
+railway variables set DB_HOST=your-supabase-host
+railway variables set DB_NAME=your-database-name
+railway variables set DB_USER=your-username
+railway variables set DB_PASSWORD=your-password
+railway variables set JWT_SECRET=your-jwt-secret
+railway variables set PREDICTIONS_ENABLED=false
+railway variables set PREDICTIONS_COUPLE_ALLOWLIST=""
 ```
 
-#### 4.2 新しいサービスのビルド
+#### 4.2 Railwayでのデプロイ
 ```bash
-# predictorサービスのビルド
-docker compose -f regular-shopping-app/docker-compose.yml build predictor
+# Railwayにデプロイ
+railway up
 
-# 期待結果: ビルドが成功する
+# デプロイ状況の確認
+railway status
 ```
 
-#### 4.3 全サービスの起動
+#### 4.3 デプロイ後の確認
 ```bash
-# 全サービスの起動
-docker compose -f regular-shopping-app/docker-compose.yml up -d
+# ログの確認
+railway logs
 
-# 確認
-docker compose -f regular-shopping-app/docker-compose.yml ps
-# 期待結果: すべてのサービスがUp状態
+# サービスの状態確認
+railway status
 ```
 
-### ステップ5: 動作確認
+### ステップ5: Railwayでの動作確認
 
 #### 5.1 サービス起動確認
 ```bash
-# ログの確認
-docker compose -f regular-shopping-app/docker-compose.yml logs predictor
+# Railwayログの確認
+railway logs
 
 # 期待結果: エラーがなく、Flaskアプリケーションが起動している
 ```
 
 #### 5.2 ヘルスチェック
 ```bash
+# RailwayのURLを取得
+railway domain
+
 # ヘルスチェックエンドポイントの確認
-curl http://localhost:5001/health
+curl https://your-railway-app.railway.app/health
 
 # 期待結果:
 # {
@@ -181,7 +216,7 @@ curl http://localhost:5001/health
 #### 5.3 予測エンドポイントの確認
 ```bash
 # 予測エンドポイントのテスト
-curl -X POST http://localhost:5001/predict \
+curl -X POST https://your-railway-app.railway.app/predict \
   -H "Content-Type: application/json" \
   -d '{
     "items": [
@@ -204,25 +239,20 @@ curl -X POST http://localhost:5001/predict \
 # }
 ```
 
-### ステップ6: 統合テスト
+### ステップ6: Railwayでの統合テスト
 
 #### 6.1 サービス間通信の確認
 ```bash
-# apiサービスからpredictorサービスへの通信確認
-docker compose -f regular-shopping-app/docker-compose.yml exec api node -e "
-fetch('http://predictor:5000/health')
-  .then(res => res.json())
-  .then(data => console.log('Health check:', data))
-  .catch(err => console.error('Error:', err));
-"
+# RailwayのAPIエンドポイントで通信確認
+curl https://your-railway-app.railway.app/api/health
 
 # 期待結果: 正常に通信できる
 ```
 
 #### 6.2 全サービスの動作確認
 ```bash
-# 全サービスの状態確認
-docker compose -f regular-shopping-app/docker-compose.yml ps
+# Railwayサービスの状態確認
+railway status
 
 # 期待結果: すべてのサービスが正常に動作している
 ```
@@ -232,25 +262,25 @@ docker compose -f regular-shopping-app/docker-compose.yml ps
 ### 緊急時ロールバック
 問題が発生した場合の緊急ロールバック手順：
 
-#### 1. サービスの停止
+#### 1. Railwayでのサービスの停止
 ```bash
-# predictorサービスの停止
-docker compose -f regular-shopping-app/docker-compose.yml stop predictor
+# Railwayでのサービスの停止
+railway service stop predictor
 
 # 他のサービスは継続
-docker compose -f regular-shopping-app/docker-compose.yml up -d api frontend db
+railway service start api
 ```
 
-#### 2. 設定の復元
+#### 2. 環境変数の無効化
 ```bash
-# docker-compose.ymlからpredictorサービス設定を削除
-# または、コメントアウト
+# 予測機能を無効化
+railway variables set PREDICTIONS_ENABLED=false
 ```
 
 #### 3. 動作確認
 ```bash
 # 既存機能の動作確認
-curl http://localhost:3000/api/health
+curl https://your-railway-app.railway.app/api/health
 
 # 期待結果: 既存機能が正常に動作している
 ```
@@ -272,14 +302,14 @@ curl http://localhost:3000/api/health
 
 ### ログの確認方法
 ```bash
-# predictorサービスのログ確認
-docker compose -f regular-shopping-app/docker-compose.yml logs predictor
+# Railwayでのログ確認
+railway logs
 
 # リアルタイムログ監視
-docker compose -f regular-shopping-app/docker-compose.yml logs -f predictor
+railway logs --follow
 
-# 特定の時間範囲のログ
-docker compose -f regular-shopping-app/docker-compose.yml logs predictor --since="2024-01-01T00:00:00"
+# 特定のサービスのログ
+railway logs --service predictor
 ```
 
 ### メトリクスの確認
@@ -293,7 +323,7 @@ curl http://localhost:5001/metrics
 ### パフォーマンス監視
 ```bash
 # レスポンス時間の確認
-time curl -X POST http://localhost:5001/predict \
+time curl -X POST https://your-railway-app.railway.app/predict \
   -H "Content-Type: application/json" \
   -d '{"items": [{"categoryId": "dairy", "daysSinceLastPurchase": 3}]}'
 
@@ -305,15 +335,15 @@ time curl -X POST http://localhost:5001/predict \
 ### よくある問題と解決方法
 
 #### 1. サービスが起動しない
-**症状**: `predictor`サービスが起動しない
+**症状**: Railwayで`predictor`サービスが起動しない
 **原因**: Dockerfileの設定ミス、依存関係の問題
 **解決方法**:
 ```bash
 # ログの確認
-docker compose -f regular-shopping-app/docker-compose.yml logs predictor
+railway logs --service predictor
 
-# イメージの再ビルド
-docker compose -f regular-shopping-app/docker-compose.yml build --no-cache predictor
+# Railwayでの再デプロイ
+railway up
 ```
 
 #### 2. 確率マトリックスファイルが見つからない
@@ -321,36 +351,35 @@ docker compose -f regular-shopping-app/docker-compose.yml build --no-cache predi
 **原因**: ファイルの配置ミス、権限の問題
 **解決方法**:
 ```bash
-# ファイルの存在確認
-docker compose -f regular-shopping-app/docker-compose.yml exec predictor ls -la /app/
+# Railwayでのファイル確認
+railway run ls -la /app/
 
 # ファイルの再配置
-docker compose -f regular-shopping-app/docker-compose.yml exec predictor cp /app/probability_matrix.json.backup /app/probability_matrix.json
+railway run cp /app/probability_matrix.json.backup /app/probability_matrix.json
 ```
 
 #### 3. サービス間通信エラー
 **症状**: `api`サービスから`predictor`サービスにアクセスできない
-**原因**: ネットワーク設定の問題
+**原因**: Railwayのネットワーク設定の問題
 **解決方法**:
 ```bash
-# ネットワークの確認
-docker network ls
+# Railwayでのサービス状態確認
+railway status
 
-# ネットワークの再作成
-docker compose -f regular-shopping-app/docker-compose.yml down
-docker compose -f regular-shopping-app/docker-compose.yml up -d
+# Railwayでの再デプロイ
+railway up
 ```
 
-#### 4. ポート競合
-**症状**: ポート5001が既に使用されている
-**原因**: 他のサービスが同じポートを使用
+#### 4. 環境変数の問題
+**症状**: 環境変数が正しく設定されていない
+**原因**: Railwayでの環境変数設定ミス
 **解決方法**:
 ```bash
-# ポート使用状況の確認
-lsof -i :5001
+# 環境変数の確認
+railway variables
 
-# 競合するサービスの停止
-# または、docker-compose.ymlでポート番号を変更
+# 環境変数の再設定
+railway variables set PREDICTIONS_ENABLED=false
 ```
 
 ## 成功基準
