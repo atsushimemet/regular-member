@@ -77,7 +77,7 @@ docker compose -f regular-shopping-app/docker-compose.yml logs predictor
 **テスト方法**:
 ```bash
 # ヘルスチェック
-curl http://localhost:5000/health
+curl http://localhost:5001/health
 ```
 
 **期待結果**:
@@ -94,7 +94,7 @@ curl http://localhost:5000/health
 **テスト方法**:
 ```bash
 # サンプルリクエスト
-curl -X POST http://localhost:5000/predict \
+curl -X POST http://localhost:5001/predict \
   -H "Content-Type: application/json" \
   -d '{
     "items": [
@@ -143,7 +143,7 @@ docker compose -f regular-shopping-app/docker-compose.yml exec predictor cat /ap
 ```bash
 # 各カテゴリのテスト
 for category in dairy frozen vegetables; do
-  curl -X POST http://localhost:5000/predict \
+  curl -X POST http://localhost:5001/predict \
     -H "Content-Type: application/json" \
     -d "{\"items\": [{\"categoryId\": \"$category\", \"daysSinceLastPurchase\": 1}]}"
 done
@@ -162,7 +162,7 @@ done
 ```bash
 # 10回のリクエストで平均時間を測定
 for i in {1..10}; do
-  time curl -X POST http://localhost:5000/predict \
+  time curl -X POST http://localhost:5001/predict \
     -H "Content-Type: application/json" \
     -d '{"items": [{"categoryId": "dairy", "daysSinceLastPurchase": 3}]}' \
     -s -o /dev/null
@@ -179,7 +179,7 @@ done
 ```bash
 # 5つの同時リクエスト
 for i in {1..5}; do
-  curl -X POST http://localhost:5000/predict \
+  curl -X POST http://localhost:5001/predict \
     -H "Content-Type: application/json" \
     -d "{\"items\": [{\"categoryId\": \"dairy\", \"daysSinceLastPurchase\": $i}]}" &
 done
@@ -198,17 +198,17 @@ wait
 **テスト方法**:
 ```bash
 # 無効なJSON
-curl -X POST http://localhost:5000/predict \
+curl -X POST http://localhost:5001/predict \
   -H "Content-Type: application/json" \
   -d 'invalid json'
 
 # 無効なカテゴリ
-curl -X POST http://localhost:5000/predict \
+curl -X POST http://localhost:5001/predict \
   -H "Content-Type: application/json" \
   -d '{"items": [{"categoryId": "invalid", "daysSinceLastPurchase": 3}]}'
 
 # 無効な日数
-curl -X POST http://localhost:5000/predict \
+curl -X POST http://localhost:5001/predict \
   -H "Content-Type: application/json" \
   -d '{"items": [{"categoryId": "dairy", "daysSinceLastPurchase": -1}]}'
 ```
@@ -226,7 +226,7 @@ curl -X POST http://localhost:5000/predict \
 docker compose -f regular-shopping-app/docker-compose.yml exec predictor rm /app/probability_matrix.json
 
 # リクエスト実行
-curl -X POST http://localhost:5000/predict \
+curl -X POST http://localhost:5001/predict \
   -H "Content-Type: application/json" \
   -d '{"items": [{"categoryId": "dairy", "daysSinceLastPurchase": 3}]}'
 
@@ -245,7 +245,7 @@ docker compose -f regular-shopping-app/docker-compose.yml exec predictor cp /app
 **テスト方法**:
 ```bash
 # リクエスト実行
-curl -X POST http://localhost:5000/predict \
+curl -X POST http://localhost:5001/predict \
   -H "Content-Type: application/json" \
   -d '{"items": [{"categoryId": "dairy", "daysSinceLastPurchase": 3}]}'
 
@@ -264,7 +264,7 @@ docker compose -f regular-shopping-app/docker-compose.yml logs predictor
 ```bash
 # 複数のカテゴリでリクエスト
 for category in dairy frozen vegetables meat; do
-  curl -X POST http://localhost:5000/predict \
+  curl -X POST http://localhost:5001/predict \
     -H "Content-Type: application/json" \
     -d "{\"items\": [{\"categoryId\": \"$category\", \"daysSinceLastPurchase\": 3}]}"
 done
@@ -292,6 +292,9 @@ fetch('http://predictor:5000/health')
   .then(data => console.log('Health check:', data))
   .catch(err => console.error('Error:', err));
 "
+
+# または、pingでネットワーク接続を確認
+docker compose -f regular-shopping-app/docker-compose.yml exec api ping predictor
 ```
 
 **期待結果**:
@@ -394,8 +397,8 @@ docker compose -f regular-shopping-app/docker-compose.yml ps
 
 ### 基本動作確認
 - [ ] Flask予測サービスが正常に起動する
-- [ ] ヘルスチェックエンドポイント（`/health`）が正常に動作する
-- [ ] 予測エンドポイント（`/predict`）が正常に動作する
+- [ ] ヘルスチェックエンドポイント（`http://localhost:5001/health`）が正常に動作する
+- [ ] 予測エンドポイント（`http://localhost:5001/predict`）が正常に動作する
 - [ ] 確率マトリックスが正しく読み込まれる
 
 ### パフォーマンス確認
