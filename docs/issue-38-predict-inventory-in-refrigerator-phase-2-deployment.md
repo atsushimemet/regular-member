@@ -41,9 +41,9 @@
 - [ ] 環境変数が正しく設定されている
 
 ### 現在のRender構成
-- **フロントエンド**: `regular-member`（静的サイト）
-- **バックエンドAPI**: `regular-member-full`（Node.js）
-- **新規追加**: `regular-member-predictor`（Flask）
+- **フロントエンド**: `regular-member`（静的サイト）- https://regular-member.onrender.com
+- **バックエンドAPI**: `regular-member-full`（Node.js）- https://regular-member-full.onrender.com
+- **新規追加**: `regular-member-predictor`（Flask）- https://regular-member-predictor.onrender.com
 
 ## デプロイ手順
 
@@ -76,16 +76,16 @@ git push origin feature/issue-38-phase-2-flask-predictor
 ### ステップ2: Render設定の更新
 
 #### 2.1 render.yamlの更新
-`render.yaml`にFlask予測サービスを追加：
+プロジェクトルートの`render.yaml`にFlask予測サービスを追加：
 
 ```yaml
 services:
   # フロントエンド（静的サイト）
   - type: web
-    name: regular-member-frontend
+    name: regular-member
     env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./build
+    buildCommand: cd regular-shopping-app && npm install && npm run build
+    staticPublishPath: ./regular-shopping-app/build
     routes:
       - type: rewrite
         source: /*
@@ -95,8 +95,8 @@ services:
   - type: web
     name: regular-member-full
     env: node
-    buildCommand: cd server && npm install
-    startCommand: cd server && npm start
+    buildCommand: cd regular-shopping-app/server && npm install
+    startCommand: cd regular-shopping-app/server && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -127,8 +127,8 @@ services:
   - type: web
     name: regular-member-predictor
     env: python
-    buildCommand: pip install -r predictor/requirements.txt
-    startCommand: cd predictor && python app.py
+    buildCommand: cd regular-shopping-app/predictor && pip install -r requirements.txt
+    startCommand: cd regular-shopping-app/predictor && python app.py
     envVars:
       - key: PORT
         value: 5000
