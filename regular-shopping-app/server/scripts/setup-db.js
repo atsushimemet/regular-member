@@ -44,17 +44,6 @@ async function setupDatabase() {
       )
     `);
 
-    // 共有リンクテーブル（既存ルートで参照済み）
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS share_links (
-        id SERIAL PRIMARY KEY,
-        share_id VARCHAR(255) UNIQUE NOT NULL,
-        couple_id VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (couple_id) REFERENCES couples(couple_id) ON DELETE CASCADE
-      )
-    `);
-
     // インデックスの作成
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_regular_items_couple_id ON regular_items(couple_id)
@@ -75,15 +64,6 @@ async function setupDatabase() {
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_last_purchases_purchased_at ON last_purchases(last_purchased_at)
-    `);
-
-    // 共有リンクテーブルのインデックス
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_share_links_share_id ON share_links(share_id)
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_share_links_couple_id ON share_links(couple_id)
     `);
 
     console.log('Database setup completed successfully!');
