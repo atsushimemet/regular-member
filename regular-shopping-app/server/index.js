@@ -4,6 +4,8 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const itemsRoutes = require('./routes/items');
+const { predictionsEnabled, predictorUrl, isAllowlistEnabled, getAllowlistSize } = require('./config/featureFlags');
+const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,7 +23,16 @@ app.use('/api/items', itemsRoutes);
 
 // ヘルスチェック
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Regular Shopping App API is running' });
+  res.json({
+    status: 'OK',
+    message: 'Regular Shopping App API is running',
+    predictions: {
+      enabled: predictionsEnabled,
+      allowlistEnabled: isAllowlistEnabled(),
+      allowlistSize: getAllowlistSize(),
+      predictorUrlConfigured: Boolean(predictorUrl)
+    }
+  });
 });
 
 // 404エラーハンドリング
@@ -37,6 +48,12 @@ app.use((error, req, res, next) => {
 
 // サーバー開始
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`API endpoints available at http://localhost:${PORT}/api`);
+  logger.info('Server started', { port: PORT });
+  logger.info('Predictions feature flags', {
+    predictionsEnabled,
+    allowlistEnabled: isAllowlistEnabled(),
+    allowlistSize: getAllowlistSize(),
+    predictorUrl
+  });
+  logger.info('API endpoints available', { baseUrl: `http://localhost:${PORT}/api` });
 });
