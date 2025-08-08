@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const itemsRoutes = require('./routes/items');
+const predictionsRoutes = require('./routes/predictions');
 const { predictionsEnabled, predictorUrl, isAllowlistEnabled, getAllowlistSize } = require('./config/featureFlags');
 const logger = require('./utils/logger');
 
@@ -20,6 +21,7 @@ app.use(express.json());
 // ルート
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemsRoutes);
+app.use('/api/predictions', predictionsRoutes);
 
 // ヘルスチェック
 app.get('/api/health', (req, res) => {
