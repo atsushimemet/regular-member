@@ -57,7 +57,10 @@ def get_probability(category_id: str, days_since_purchase: int) -> float:
     category_data = matrix.get(category_id, {})
     if not category_data:
         logger.warning(
-            f"Category {category_id} not found in matrix, " f"returning default"
+            f"Category '{category_id}' not found in probability matrix. "
+            f"Please add this category to probability_matrix.json with "
+            f"appropriate probability ranges (e.g., '0-1': 0.8, '2-3': 0.6, etc.). "
+            f"Returning default probability 0.5."
         )
         return 0.5
 
